@@ -1,0 +1,8 @@
+{
+  "label": "虚拟机",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "深入了解 QVMConsole 虚拟机管理的全部功能，从创建到运维的完整指南"
+  }
+}

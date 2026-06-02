@@ -1,0 +1,568 @@
+---
+sidebar_position: 2
+sidebar_label: QVMConsole 架构
+description: QVMConsole 程序架构设计与技术实现详解
+---
+
+# QVMConsole 架构设计
+
+本页面主要是展示QVMConsole程序技术公开。
+
+## 整体架构
+
+QVMConsole 采用前后端分离架构，后端基于 Go 语言，前端使用 Vue.js 3。
+
+```mermaid
+graph TB
+    subgraph 客户端
+        Browser[浏览器]
+    end
+
+    subgraph 前端应用
+        Vue[Vue.js 3 + Vite]
+        Pinia[Pinia 状态管理]
+        ElementPlus[Element Plus UI]
+    end
+
+    subgraph 后端服务
+        Gin[Go Gin HTTP 服务]
+        Middleware[中间件层]
+        Router[路由层]
+        Handler[Handler 处理层]
+        Service[Service 业务层]
+        TaskQueue[任务队列]
+    end
+
+    subgraph 数据层
+        SQLite[SQLite 数据库]
+        Libvirt[libvirt API]
+        System[系统命令]
+    end
+
+    Browser --> Vue
+    Vue --> Pinia
+    Vue --> ElementPlus
+    Vue -->|HTTP API| Gin
+    Gin --> Middleware
+    Middleware --> Router
+    Router --> Handler
+    Handler --> Service
+    Service --> TaskQueue
+    Service --> SQLite
+    Service --> Libvirt
+    Service --> System
+```
+
+## 后端架构
+
+### 技术栈
+
+| 组件 | 技术 | 说明 |
+|------|------|------|
+| Web 框架 | Gin | 高性能 HTTP 框架 |
+| 虚拟化 API | libvirt | 虚拟机管理接口 |
+| 数据库 | SQLite | 轻量级嵌入式数据库 |
+| 任务队列 | 自研 | 基于 goroutine 的异步任务系统 |
+
+### 目录结构
+
+```
+server/
+├── main.go              # 程序入口
+├── config/              # 配置管理
+│   └── config.go
+├── router/              # 路由定义
+│   └── router.go
+├── handler/             # HTTP 请求处理
+│   ├── auth.go          # 认证相关
+│   ├── vm.go            # 虚拟机管理
+│   ├── network.go       # 网络管理
+│   ├── template.go      # 模板管理
+│   ├── user.go          # 用户管理
+│   └── ...
+├── middleware/          # 中间件
+│   ├── auth.go          # JWT 认证
+│   └── cors.go          # CORS 跨域
+├── model/               # 数据模型
+│   ├── db.go            # 数据库初始化
+│   ├── user.go          # 用户模型
+│   ├── vm_cache.go      # VM 缓存模型
+│   └── ...
+├── service/             # 业务逻辑
+│   ├── libvirt.go       # libvirt 封装
+│   ├── vm_create.go     # VM 创建
+│   ├── vm_runtime.go    # VM 运行时管理
+│   ├── network.go       # 网络服务
+│   └── ...
+├── taskqueue/           # 任务队列
+│   └── queue.go
+└── utils/               # 工具函数
+    └── cmd.go           # 系统命令执行
+```
+
+### 请求处理流程
+
+```mermaid
+sequenceDiagram
+    participant Client as 客户端
+    participant Gin as Gin 路由
+    participant Auth as 认证中间件
+    participant Handler as Handler
+    participant Service as Service
+    participant DB as SQLite
+    participant Libvirt as libvirt
+
+    Client->>Gin: HTTP 请求
+    Gin->>Auth: 验证 Token
+    Auth->>Handler: 解析参数
+    Handler->>Service: 调用业务逻辑
+    Service->>DB: 读写数据库
+    Service->>Libvirt: 管理虚拟机
+    Service-->>Handler: 返回结果
+    Handler-->>Client: JSON 响应
+```
+
+### API 路由结构
+
+```mermaid
+graph LR
+    subgraph API["/api"]
+        subgraph 公开接口
+            Auth["/auth"]
+            Public["/public"]
+        end
+        
+        subgraph 需要认证
+            VM["/vm"]
+            Template["/template"]
+            Network["/network"]
+            VPC["/vpc"]
+            Storage["/storage-pool"]
+            User["/user"]
+            Task["/task"]
+            Host["/host"]
+        end
+    end
+
+    Auth --> Login["/login"]
+    Auth --> Register["/invite"]
+    Auth --> Password["/password"]
+    
+    VM --> VMList["/list"]
+    VM --> VMCreate["/create"]
+    VM --> VMClone["/clone"]
+    VM --> VMSnapshot["/:name/snapshot"]
+    
+    Network --> PortForward["/port-forward"]
+    Network --> StaticIP["/static-ip"]
+    Network --> PublicIP["/public-ips"]
+    
+    VPC --> Switch["/switches"]
+    VPC --> SecurityGroup["/security-groups"]
+```
+
+### 中间件系统
+
+| 中间件 | 功能 | 应用范围 |
+|--------|------|----------|
+| `CORSMiddleware` | 处理跨域请求 | 全局 |
+| `AuthMiddleware` | JWT 令牌验证 | 需要认证的接口 |
+| `AdminMiddleware` | 管理员权限验证 | 管理员接口 |
+| `VMAccessMiddleware` | VM 归属权限验证 | VM 操作接口 |
+| `ElasticCloudOnlyMiddleware` | 弹性云功能限制 | 弹性云专属功能 |
+| `TokenTypeMiddleware` | 令牌类型验证 | 特定类型接口 |
+
+## 前端架构
+
+### 技术栈
+
+| 组件 | 技术 | 说明 |
+|------|------|------|
+| 框架 | Vue.js 3 | 渐进式 JavaScript 框架 |
+| 构建工具 | Vite | 下一代前端构建工具 |
+| 状态管理 | Pinia | Vue 3 官方状态管理 |
+| UI 组件库 | Element Plus | Vue 3 组件库 |
+| HTTP 客户端 | Axios | 基于 Promise 的 HTTP 库 |
+| 路由 | Vue Router 4 | Vue.js 官方路由 |
+
+### 目录结构
+
+```
+web/src/
+├── main.js              # 程序入口
+├── App.vue              # 根组件
+├── api/                 # API 接口定义
+│   ├── auth.js          # 认证接口
+│   ├── vm.js            # 虚拟机接口
+│   ├── network.js       # 网络接口
+│   └── ...
+├── assets/              # 静态资源
+├── components/          # 公共组件
+│   ├── VmForm.vue       # VM 表单组件
+│   ├── SnapshotList.vue # 快照列表组件
+│   └── ...
+├── layout/              # 布局组件
+│   └── index.vue        # 主布局
+├── router/              # 路由配置
+│   └── index.js
+├── store/               # 状态管理
+│   ├── user.js          # 用户状态
+│   └── vm.js            # VM 状态
+├── utils/               # 工具函数
+│   ├── request.js       # HTTP 请求封装
+│   ├── clipboard.js     # 剪贴板操作
+│   └── vnc.js           # VNC 连接
+└── views/               # 页面视图
+    ├── dashboard/       # 首页仪表盘
+    ├── vm/              # 虚拟机管理
+    ├── network/         # 网络管理
+    ├── template/        # 模板管理
+    └── ...
+```
+
+### 页面路由
+
+```mermaid
+graph TB
+    subgraph 公开页面
+        Login[登录页]
+        Invite[邀请注册]
+        ResetPwd[重置密码]
+    end
+    
+    subgraph 主应用
+        Layout[主布局]
+        
+        subgraph 功能页面
+            Dashboard[首页]
+            VMList[虚拟机列表]
+            VMDetail[虚拟机详情]
+            Template[模板管理]
+            Network[网络管理]
+            Storage[存储池]
+            User[用户管理]
+            Settings[系统设置]
+        end
+    end
+    
+    Login --> Layout
+    Invite --> Login
+    Layout --> Dashboard
+    Layout --> VMList
+    VMList --> VMDetail
+```
+
+### 状态管理
+
+```mermaid
+graph LR
+    subgraph Store
+        UserStore[用户状态]
+        VMStore[VM 状态]
+    end
+    
+    subgraph 数据
+        Token[JWT Token]
+        Role[用户角色]
+        CloudType[云类型]
+        VisitedVMs[已访问 VM]
+    end
+    
+    UserStore --> Token
+    UserStore --> Role
+    UserStore --> CloudType
+    VMStore --> VisitedVMs
+```
+
+## 数据库设计
+
+### 核心数据表
+
+```mermaid
+erDiagram
+    USERS ||--o{ VM_CREDENTIALS : has
+    USERS ||--o{ USER_API_KEYS : has
+    USERS ||--o{ USER_TRAFFIC_DAILY : has
+    
+    VM_CACHE ||--o{ VM_STATS_RECORDS : has
+    VM_CACHE ||--o{ VM_LOCKS : has
+    VM_CACHE ||--o{ VM_SCHEDULES : has
+    
+    TASKS ||--o{ TASK : contains
+    
+    SYSTEM_SETTINGS {
+        string key PK
+        string value
+        string description
+    }
+    
+    USERS {
+        string username PK
+        string password_hash
+        string role
+        string cloud_type
+        string email
+        boolean enabled
+    }
+    
+    VM_CACHE {
+        string name PK
+        string owner
+        string status
+        int cpu
+        int memory_mb
+        string ip
+        string os_type
+    }
+    
+    TASKS {
+        string id PK
+        string type
+        string status
+        string params
+        int progress
+        string result
+    }
+```
+
+### 数据表说明
+
+| 表名 | 用途 |
+|------|------|
+| `users` | 用户账户信息 |
+| `vm_cache` | 虚拟机信息缓存 |
+| `tasks` | 异步任务记录 |
+| `system_settings` | 系统配置项 |
+| `vm_credentials` | VM 登录凭据 |
+| `vm_locks` | VM 锁定状态 |
+| `vm_schedules` | VM 定时任务 |
+| `storage_pools` | 存储池配置 |
+| `network_bridges` | 网桥配置 |
+| `vpc_switches` | VPC 交换机 |
+| `vpc_security_groups` | 安全组 |
+
+## 任务队列系统
+
+### 架构设计
+
+```mermaid
+graph TB
+    subgraph 任务提交
+        API[API 请求]
+        TaskCreate[创建任务]
+    end
+    
+    subgraph 任务队列
+        Queue[任务队列]
+        Worker1[Worker 1]
+        Worker2[Worker 2]
+        Worker3[Worker 3]
+    end
+    
+    subgraph 任务处理
+        Handler[任务处理器]
+        Progress[进度回调]
+    end
+    
+    subgraph 外部系统
+        Libvirt[libvirt]
+        System[系统命令]
+    end
+    
+    API --> TaskCreate
+    TaskCreate --> Queue
+    Queue --> Worker1
+    Queue --> Worker2
+    Queue --> Worker3
+    Worker1 --> Handler
+    Worker2 --> Handler
+    Worker3 --> Handler
+    Handler --> Progress
+    Handler --> Libvirt
+    Handler --> System
+```
+
+### 支持的任务类型
+
+| 任务类型 | 说明 | 可取消 |
+|---------|------|--------|
+| `clone` | 虚拟机克隆 | ✅ |
+| `linked_clone` | 原生链式克隆 | ✅ |
+| `batch` | 批量克隆 | ✅ |
+| `create` | 普通创建 VM | ✅ |
+| `reinstall` | 重装系统 | ❌ |
+| `delete` | 删除 VM | ❌ |
+| `snapshot` | 快照操作 | ❌ |
+| `migration` | VM 迁移 | ❌ |
+| `import` | 导入 VM | ✅ |
+| `export` | 导出 VM | ✅ |
+| `template` | 模板操作 | ❌ |
+
+### 任务生命周期
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: 提交任务
+    Pending --> Running: Worker 获取
+    Running --> Success: 执行成功
+    Running --> Failed: 执行失败
+    Running --> Cancelled: 用户取消
+    Success --> [*]
+    Failed --> [*]
+    Cancelled --> [*]
+```
+
+## 虚拟化集成
+
+### libvirt 交互
+
+```mermaid
+sequenceDiagram
+    participant QVM as QVMConsole
+    participant Lib as libvirt
+    participant QEMU as QEMU/KVM
+    
+    QVM->>Lib: Connect("qemu:///system")
+    Lib-->>QVM: Connection Handle
+    
+    QVM->>Lib: LookupVM("vm-name")
+    Lib-->>QVM: Domain Handle
+    
+    QVM->>Lib: Start()
+    Lib->>QEMU: 启动 VM
+    
+    QVM->>Lib: GetVMInfo()
+    Lib->>QEMU: 查询状态
+    Lib-->>QVM: VM 信息
+```
+
+### 支持的虚拟化操作
+
+| 操作 | libvirt API | 说明 |
+|------|-------------|------|
+| 创建 VM | `DefineXML` + `Create` | 定义并启动 |
+| 关机 | `Shutdown` / `Destroy` | 正常/强制关机 |
+| 暂停 | `Suspend` | 暂停 VM |
+| 恢复 | `Resume` | 恢复运行 |
+| 快照 | `SnapshotCreateXML` | 创建快照 |
+| 迁移 | `MigrateToURI` | 跨节点迁移 |
+| 克隆 | `DefineXML` + 磁盘复制 | 克隆 VM |
+
+## 安全机制
+
+### 认证流程
+
+```mermaid
+sequenceDiagram
+    participant Client as 客户端
+    participant API as API 服务
+    participant DB as 数据库
+    
+    Client->>API: POST /auth/login
+    API->>DB: 验证用户名密码
+    DB-->>API: 用户信息
+    
+    alt 启用 2FA
+        API-->>Client: 需要 2FA 验证
+        Client->>API: POST /auth/login/verify
+        API->>API: 验证 TOTP 码
+    end
+    
+    API-->>Client: JWT Token
+    Client->>API: 后续请求 (带 Token)
+    API->>API: 验证 Token
+```
+
+### 权限控制
+
+```mermaid
+graph TB
+    subgraph 角色
+        Admin[管理员]
+        User[普通用户]
+        Lightweight[轻量云用户]
+    end
+    
+    subgraph 权限
+        AllAccess[全部功能]
+        VMOwned[仅自己的 VM]
+        LimitedVM[受限 VM 功能]
+    end
+    
+    Admin --> AllAccess
+    User --> VMOwned
+    Lightweight --> LimitedVM
+```
+
+### 高风险操作二次验证
+
+| 操作 | 验证方式 |
+|------|----------|
+| 删除 VM | TOTP/邮箱验证码 |
+| 重置密码 | TOTP/邮箱验证码 |
+| 导出 VM | TOTP/邮箱验证码 |
+| 修改系统设置 | TOTP/邮箱验证码 |
+| 删除用户 | TOTP/邮箱验证码 |
+
+## SSE 实时推送
+
+QVMConsole 使用 Server-Sent Events 实现实时数据推送：
+
+```mermaid
+sequenceDiagram
+    participant Client as 浏览器
+    participant API as API 服务
+    
+    Client->>API: GET /api/vm/sse
+    API-->>Client: SSE 连接建立
+    
+    loop 实时推送
+        API-->>Client: VM 状态更新
+        API-->>Client: 任务进度
+    end
+    
+    Client->>API: 关闭连接
+```
+
+### SSE 端点
+
+| 端点 | 推送内容 |
+|------|----------|
+| `/api/vm/sse` | VM 列表状态 |
+| `/api/vm/:name/sse` | 单个 VM 详情 |
+| `/api/host/stats/sse` | 宿主机资源 |
+| `/api/task/sse` | 任务进度 |
+| `/api/scheduler/events/sse` | 调度事件 |
+
+## 部署架构
+
+```mermaid
+graph TB
+    subgraph 单机部署
+        Nginx[Nginx 反向代理]
+        QVMConsole[QVMConsole 服务]
+        SQLite[SQLite 数据库]
+        Libvirt[libvirt]
+        QEMU[QEMU/KVM]
+    end
+    
+    subgraph 客户端
+        Browser[浏览器]
+    end
+    
+    Browser --> Nginx
+    Nginx --> QVMConsole
+    QVMConsole --> SQLite
+    QVMConsole --> Libvirt
+    Libvirt --> QEMU
+```
+
+### 生产环境配置
+
+| 组件 | 配置 |
+|------|------|
+| Web 服务器 | Nginx (反向代理 + SSL) |
+| 应用服务 | QVMConsole (systemd) |
+| 数据库 | SQLite (本地文件) |
+| 虚拟化 | libvirt + QEMU/KVM |
+| 前端 | 静态文件 (Nginx 托管) |

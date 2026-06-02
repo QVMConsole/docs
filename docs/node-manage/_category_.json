@@ -1,0 +1,8 @@
+{
+  "label": "节点管理",
+  "position": 9,
+  "link": {
+    "type": "generated-index",
+    "description": "深入了解 QVMConsole 节点管理的全部功能，涵盖多节点接入、连通性探测与虚拟机迁移"
+  }
+}

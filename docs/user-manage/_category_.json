@@ -1,0 +1,8 @@
+{
+  "label": "用户管理",
+  "position": 11,
+  "link": {
+    "type": "generated-index",
+    "description": "深入了解 QVMConsole 用户管理的全部功能，涵盖用户生命周期、配额管理与安全认证"
+  }
+}

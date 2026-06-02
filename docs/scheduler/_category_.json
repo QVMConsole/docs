@@ -1,0 +1,8 @@
+{
+  "label": "调度事件",
+  "position": 12,
+  "link": {
+    "type": "generated-index",
+    "description": "深入了解 QVMConsole 调度事件的全部功能，涵盖全局调度器、事件日志与 VM 定时任务"
+  }
+}

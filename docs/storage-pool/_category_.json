@@ -1,0 +1,8 @@
+{
+  "label": "存储池",
+  "position": 8,
+  "link": {
+    "type": "generated-index",
+    "description": "深入了解 QVMConsole 存储池管理的全部功能，涵盖物理磁盘管理、分区配置与默认存储设置"
+  }
+}

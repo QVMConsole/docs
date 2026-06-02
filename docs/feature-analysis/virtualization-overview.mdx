@@ -1,0 +1,420 @@
+---
+sidebar_position: 1
+sidebar_label: 虚拟化概述
+description: 虚拟化技术原理与 KVM/QEMU 架构介绍
+---
+
+# 虚拟化概述
+
+## 什么是虚拟化？
+
+虚拟化（Virtualization）是一种将物理硬件资源抽象为多个逻辑资源的技术。通过虚拟化，可以在一台物理服务器上运行多个相互隔离的虚拟机（VM），每个虚拟机都拥有独立的操作系统和应用程序。
+
+```mermaid
+graph TB
+    subgraph 物理服务器
+        CPU[物理 CPU]
+        Memory[物理内存]
+        Storage[物理存储]
+        Network[物理网卡]
+    end
+
+    subgraph 虚拟化层
+        Hypervisor[Hypervisor / VMM]
+    end
+
+    subgraph 虚拟机
+        VM1[虚拟机 1<br/>Linux]
+        VM2[虚拟机 2<br/>Windows]
+        VM3[虚拟机 3<br/>Linux]
+    end
+
+    CPU --> Hypervisor
+    Memory --> Hypervisor
+    Storage --> Hypervisor
+    Network --> Hypervisor
+
+    Hypervisor --> VM1
+    Hypervisor --> VM2
+    Hypervisor --> VM3
+```
+
+## 虚拟化类型
+
+### Type 1 - 裸金属虚拟化
+
+Hypervisor 直接运行在物理硬件上，无需宿主操作系统。
+
+```mermaid
+graph TB
+    subgraph Type1["Type 1 - 裸金属架构"]
+        direction TB
+        VM_A[虚拟机 A]
+        VM_B[虚拟机 B]
+        VM_C[虚拟机 C]
+        HV1[Hypervisor]
+        HW1[物理硬件]
+        
+        VM_A --> HV1
+        VM_B --> HV1
+        VM_C --> HV1
+        HV1 --> HW1
+    end
+```
+
+**特点：**
+- 性能接近原生硬件
+- 安全性高，攻击面小
+- 代表：VMware ESXi、Microsoft Hyper-V、Xen
+
+### Type 2 - 宿主型虚拟化
+
+Hypervisor 运行在宿主操作系统之上。
+
+```mermaid
+graph TB
+    subgraph Type2["Type 2 - 宿主型架构"]
+        direction TB
+        VM_D[虚拟机 A]
+        VM_E[虚拟机 B]
+        HV2[Hypervisor]
+        HostOS[宿主操作系统]
+        HW2[物理硬件]
+        
+        VM_D --> HV2
+        VM_E --> HV2
+        HV2 --> HostOS
+        HostOS --> HW2
+    end
+```
+
+**特点：**
+- 安装部署简单
+- 依赖宿主操作系统
+- 代表：VMware Workstation、VirtualBox、Parallels
+
+## KVM/QEMU 虚拟化架构
+
+KVM（Kernel-based Virtual Machine）和 QEMU 是 Linux 平台下的开源虚拟化解决方案。
+
+```mermaid
+graph TB
+    subgraph 用户空间
+        QEMU[QEMU 进程]
+        Libvirt[libvirt 守护进程]
+    end
+
+    subgraph 内核空间
+        KVM[KVM 内核模块]
+        Kernel[Linux 内核]
+    end
+
+    subgraph 硬件层
+        CPU_Intel[Intel VT-x / AMD-V]
+        HW[物理硬件]
+    end
+
+    Libvirt --> QEMU
+    QEMU --> KVM
+    KVM --> Kernel
+    Kernel --> CPU_Intel
+    CPU_Intel --> HW
+```
+
+### 核心组件说明
+
+| 组件 | 作用 | 说明 |
+|------|------|------|
+| **KVM** | 内核虚拟化模块 | 利用 CPU 硬件虚拟化扩展（VT-x/AMD-V）实现虚拟化 |
+| **QEMU** | 设备模拟器 | 模拟虚拟机的 I/O 设备（磁盘、网卡、显卡等） |
+| **libvirt** | 虚拟化管理 API | 提供统一的虚拟机管理接口 |
+
+### KVM 工作原理
+
+```mermaid
+sequenceDiagram
+    participant App as 应用程序
+    participant QEMU as QEMU
+    participant KVM as KVM 内核模块
+    participant CPU as 物理 CPU
+
+    App->>QEMU: 创建 VM 请求
+    QEMU->>KVM: 创建虚拟机
+    KVM->>CPU: 分配 VMX 资源
+    
+    loop 虚拟机运行
+        KVM->>CPU: VM Entry (进入客户机)
+        CPU->>CPU: 执行客户机代码
+        CPU->>KVM: VM Exit (退出到宿主机)
+        KVM->>QEMU: 处理 I/O 或特殊指令
+        QEMU->>KVM: 继续执行
+    end
+```
+
+## 虚拟机生命周期
+
+```mermaid
+stateDiagram-v2
+    [*] --> 创建: 创建/克隆/导入
+    创建 --> 关机: 创建完成
+    
+    关机 --> 运行: 启动
+    运行 --> 关机: 关机/强制关机
+    运行 --> 暂停: 暂停
+    暂停 --> 运行: 恢复
+    
+    运行 --> 运行: 运行中操作
+    关机 --> 关机: 编辑配置
+    
+    关机 --> 删除: 删除
+    运行 --> 删除: 强制删除
+    删除 --> [*]
+```
+
+### 状态说明
+
+| 状态 | 说明 | 可执行操作 |
+|------|------|-----------|
+| **创建中** | 正在通过任务队列创建虚拟机 | 无 |
+| **关机** | 虚拟机已停止 | 启动、编辑、删除、克隆 |
+| **运行** | 虚拟机正在运行 | 关机、重启、暂停、VNC 连接 |
+| **暂停** | 虚拟机已暂停，内存状态保留 | 恢复、强制关机 |
+
+## 网络虚拟化
+
+### Linux Bridge
+
+Linux Bridge 是传统的虚拟网络方案，将虚拟网卡桥接到物理网络。
+
+```mermaid
+graph TB
+    subgraph 物理网络
+        NIC[物理网卡<br/>eth0]
+    end
+
+    subgraph 虚拟网络
+        BR[Linux Bridge<br/>br0]
+    end
+
+    subgraph 虚拟机网络
+        VNet1[VM1 vNIC]
+        VNet2[VM2 vNIC]
+        VNet3[VM3 vNIC]
+    end
+
+    NIC --> BR
+    BR --> VNet1
+    BR --> VNet2
+    BR --> VNet3
+```
+
+### OVS (Open vSwitch)
+
+OVS 是更高级的虚拟交换机，支持 OpenFlow 协议和 VLAN 隔离。
+
+```mermaid
+graph TB
+    subgraph 物理网络
+        NIC[物理网卡<br/>eth0]
+    end
+
+    subgraph 虚拟网络
+        OVS[OVS Bridge<br/>ovs-br0]
+    end
+
+    subgraph 虚拟机网络
+        VNet1[VM1 vNIC<br/>VLAN 10]
+        VNet2[VM2 vNIC<br/>VLAN 20]
+        VNet3[VM3 vNIC<br/>VLAN 10]
+    end
+
+    NIC --> OVS
+    OVS --> VNet1
+    OVS --> VNet2
+    OVS --> VNet3
+```
+
+### 网络模式对比
+
+| 模式 | 特点 | 适用场景 |
+|------|------|----------|
+| **NAT** | 虚拟机通过 NAT 访问外网 | 开发测试环境 |
+| **Bridge** | 虚拟机直接接入物理网络 | 生产环境 |
+| **VPC** | 虚拟私有云，逻辑隔离 | 多租户环境 |
+
+## 存储虚拟化
+
+### 虚拟磁盘格式
+
+```mermaid
+graph TB
+    subgraph 物理存储
+        Disk1[磁盘 1<br/>/dev/sda]
+        Disk2[磁盘 2<br/>/dev/sdb]
+    end
+
+    subgraph 虚拟磁盘格式
+        QCOW2[QCOW2 格式<br/>支持快照、压缩]
+        RAW[RAW 格式<br/>高性能]
+    end
+
+    subgraph 虚拟机
+        VM_D1[VM1 系统盘]
+        VM_D2[VM1 数据盘]
+    end
+
+    Disk1 --> QCOW2
+    Disk2 --> RAW
+    
+    QCOW2 --> VM_D1
+    RAW --> VM_D2
+```
+
+### QCOW2 vs RAW 格式
+
+| 特性 | QCOW2 | RAW |
+|------|-------|-----|
+| **快照支持** | ✅ 支持 | ❌ 不支持 |
+| **磁盘压缩** | ✅ 支持 | ❌ 不支持 |
+| **稀疏分配** | ✅ 支持 | ❌ 需预分配 |
+| **读写性能** | 中等 | 高 |
+| **空间效率** | 高 | 低 |
+
+### QCOW2 内部结构
+
+```mermaid
+graph LR
+    subgraph QCOW2 文件
+        Header[文件头]
+        L1[L1 表]
+        L2[L2 表]
+        Cluster[数据簇]
+    end
+    
+    Header --> L1
+    L1 --> L2
+    L2 --> Cluster
+```
+
+## 快照技术
+
+### 快照类型
+
+```mermaid
+graph TB
+    subgraph 内部快照
+        DiskSnap[磁盘快照]
+        MemSnap[内存快照]
+    end
+    
+    subgraph 外部快照
+        ExtDiskSnap[外部磁盘快照]
+    end
+    
+    subgraph 快照链
+        Base[基础镜像]
+        Snap1[快照 1]
+        Snap2[快照 2]
+        Current[当前状态]
+    end
+    
+    Base --> Snap1
+    Snap1 --> Snap2
+    Snap2 --> Current
+```
+
+### 快照操作
+
+| 操作 | 说明 |
+|------|------|
+| **创建** | 保存当前 VM 状态（磁盘 + 可选内存） |
+| **恢复** | 回滚到指定快照状态 |
+| **删除** | 删除单个快照 |
+| **删除全部** | 删除所有快照 |
+
+## 虚拟机迁移
+
+### 在线迁移
+
+```mermaid
+sequenceDiagram
+    participant Src as 源节点
+    participant Dst as 目标节点
+    participant VM as 虚拟机
+    
+    Src->>Dst: 建立连接
+    Src->>Dst: 传输内存页面
+    loop 脏页面迭代
+        Src->>Dst: 传输修改的页面
+    end
+    Src->>VM: 暂停 VM
+    Src->>Dst: 传输最终状态
+    Dst->>VM: 恢复 VM
+    Src->>Src: 清理资源
+```
+
+### 迁移类型
+
+| 类型 | 说明 | 停机时间 |
+|------|------|----------|
+| **在线迁移** | VM 运行时迁移 | 毫秒级 |
+| **离线迁移** | VM 关机后迁移 | 无 |
+| **存储迁移** | 磁盘文件迁移 | 取决于磁盘大小 |
+
+## 硬件直通
+
+### PCI 直通
+
+```mermaid
+graph TB
+    subgraph 宿主机
+        PCI[PCI 设备<br/>GPU/网卡]
+        IOMMU[IOMMU]
+    end
+    
+    subgraph 虚拟机
+        VM[虚拟机]
+    end
+    
+    PCI --> IOMMU
+    IOMMU -->|直通| VM
+```
+
+**优势：**
+- 接近原生性能
+- 虚拟机直接访问硬件
+
+**要求：**
+- CPU 支持 VT-d/AMD-Vi
+- 主板 BIOS 启用 IOMMU
+- 设备支持直通
+
+## 虚拟化性能优化
+
+### CPU 优化
+
+| 技术 | 说明 |
+|------|------|
+| **CPU 亲和性** | 将 VM 绑定到特定物理 CPU |
+| **NUMA 感知** | 优化内存访问路径 |
+| **CPU 拓扑** | 模拟真实的 CPU 拓扑结构 |
+
+### 内存优化
+
+| 技术 | 说明 |
+|------|------|
+| **内存气球** | 动态调整 VM 内存 |
+| **KSM** | 内核同页合并，节省内存 |
+| **大页** | 使用大页减少 TLB 缺失 |
+
+### I/O 优化
+
+| 技术 | 说明 |
+|------|------|
+| **VirtIO** | 半虚拟化 I/O 驱动 |
+| **IOPS 限制** | 磁盘 I/O 限速 |
+| **磁盘缓存** | 控制缓存策略 |
+
+## 下一步
+
+- 了解 [QVMConsole 架构](/docs/tech/feature-analysis/qvmconsole-architecture) 设计

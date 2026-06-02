@@ -26,11 +26,18 @@ const config: Config = {
     locales: ['zh-Hans'],
   },
 
+  themes: ['@docusaurus/theme-mermaid'],
+
+  markdown: {
+    mermaid: true,
+  },
+
   presets: [
     [
       'classic',
       {
         docs: {
+          routeBasePath: '/docs/tech',
           sidebarPath: './sidebars.ts',
         },
         blog: false,
@@ -54,10 +61,9 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          to: '/docs/tech/',
+          label: '功能与原理',
           position: 'left',
-          label: '文档',
         },
       ],
     },
@@ -65,6 +71,12 @@ const config: Config = {
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
+    },
+    mermaid: {
+      theme: {
+        light: 'default',
+        dark: 'dark',
+      },
     },
   } satisfies Preset.ThemeConfig,
 };

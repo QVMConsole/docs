@@ -22,12 +22,12 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className={styles.heroButtonPrimary}
-            to="/docs/intro">
+            to="/docs/tech/">
             快速开始
           </Link>
           <Link
             className={styles.heroButtonSecondary}
-            to="/docs/intro">
+            to="/docs/tech/">
             开发文档
           </Link>
         </div>
@@ -75,7 +75,7 @@ function CtaSection() {
         <div className={styles.buttons}>
           <Link
             className={styles.heroButtonPrimary}
-            to="/docs/intro">
+            to="/docs/tech/">
             阅读文档
           </Link>
         </div>
