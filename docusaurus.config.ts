@@ -9,10 +9,6 @@ const config: Config = {
   tagline: '基于 KVM/QEMU 的轻量级虚拟机管理面板',
   favicon: 'img/favicon.ico',
 
-  future: {
-    v4: true,
-  },
-
   url: 'https://your-docusaurus-site.example.com',
   baseUrl: '/',
 
@@ -36,15 +32,33 @@ const config: Config = {
     [
       'classic',
       {
-        docs: {
-          routeBasePath: '/docs/tech',
-          sidebarPath: './sidebars.ts',
-        },
+        docs: false,
         blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
       } satisfies Preset.Options,
+    ],
+  ],
+
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'install',
+        path: 'docs-install',
+        routeBasePath: 'docs/install',
+        sidebarPath: './sidebars-install.ts',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'tech',
+        path: 'docs',
+        routeBasePath: 'docs/tech',
+        sidebarPath: './sidebars.ts',
+      },
     ],
   ],
 
@@ -61,7 +75,12 @@ const config: Config = {
       },
       items: [
         {
-          to: '/docs/tech/',
+          to: 'docs/install/',
+          label: '安装与使用',
+          position: 'left',
+        },
+        {
+          to: 'docs/tech/',
           label: '功能与原理',
           position: 'left',
         },

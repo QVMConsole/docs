@@ -1,0 +1,98 @@
+.gateWrapper {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+
+.gateOverlay {
+  position: relative;
+  padding: 3rem 2rem;
+  background: linear-gradient(
+    135deg,
+    var(--ifm-color-primary-darkest),
+    var(--ifm-color-primary-darker)
+  );
+  border-radius: 8px;
+  text-align: center;
+}
+
+[data-theme='dark'] .gateOverlay {
+  background: linear-gradient(
+    135deg,
+    rgba(30, 27, 75, 0.8),
+    rgba(49, 46, 129, 0.6)
+  );
+}
+
+.gateContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.gateIcon {
+  color: var(--ifm-color-primary-lightest);
+  opacity: 0.85;
+}
+
+.gateText {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  margin: 0;
+  max-width: 400px;
+}
+
+.gateButton {
+  display: inline-block;
+  padding: 0.65rem 1.8rem;
+  background-color: var(--ifm-color-primary-light);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
+}
+
+.gateButton:hover {
+  background-color: var(--ifm-color-primary-lighter);
+  transform: translateY(-1px);
+  color: #fff;
+}
+
+.gateButton:active {
+  transform: translateY(0);
+}
+
+/* 已同意协议状态提示 */
+.agreedNotice {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.agreedIcon {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.agreedLink {
+  font-weight: 600;
+  color: var(--ifm-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.agreedLink:hover {
+  color: var(--ifm-color-primary-dark);
+}
