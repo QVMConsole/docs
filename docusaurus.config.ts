@@ -60,6 +60,21 @@ const config: Config = {
         sidebarPath: './sidebars.ts',
       },
     ],
+    [
+      '@easyops-cn/docusaurus-search-local',
+      {
+        hashed: true,
+        language: ['zh', 'en'],
+        highlightSearchTermsOnTargetPage: true,
+        explicitSearchResultPath: true,
+        docsPluginIdForPreferredVersion: 'tech',
+        indexDocs: true,
+        indexBlog: false,
+        docsRouteBasePath: ['docs/install', 'docs/tech'],
+        searchResultLimits: 10,
+        searchResultContextMaxLength: 50,
+      },
+    ],
   ],
 
   themeConfig: {
