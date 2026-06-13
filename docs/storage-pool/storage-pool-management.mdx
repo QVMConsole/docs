@@ -211,19 +211,6 @@ sequenceDiagram
     Q-->>U: 虚拟机创建成功
 ```
 
-## API 接口
-
-| 接口 | 方法 | 说明 |
-|------|------|------|
-| `/storage-pool/list` | GET | 获取存储池列表，返回所有存储池及其详细信息 |
-| `/storage-pool/{id}/config` | PUT | 更新存储池配置，修改显示名称和启用状态 |
-| `/storage-pool/{id}/default` | POST | 将指定存储池设为默认存储位置 |
-| `/storage-pool/{id}/format-mount` | POST | 格式化磁盘并挂载到指定目录 |
-
-:::warning[接口权限]
-以上所有接口均需要管理员权限才能调用。普通用户调用将返回 403 未授权错误。
-:::
-
 ## 最佳实践
 
 ### 存储池规划建议

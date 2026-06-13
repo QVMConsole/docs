@@ -1,13 +1,15 @@
 ---
 sidebar_position: 1
+title: 部署
+description: QVMConsole 安装部署方法和系统要求
 slug: /
 ---
 
 import AgreementGate from '@site/src/components/AgreementGate';
 
-# 安装
+# 部署
 
-本页面介绍 QVMConsole 的安装方法和系统要求。
+本页面介绍 QVMConsole 的部署方法和系统要求。
 
 ## 系统要求
 
@@ -37,7 +39,7 @@ QVMConsole 当前仅支持 **Debian 系列** 发行版：
 
 ## 准备环境
 
-在安装之前，请确保将系统所有软件包和内核更新到最新版本：
+在部署之前，请确保将系统所有软件包和内核更新到最新版本：
 
 ```bash
 sudo apt update && sudo apt full-upgrade
@@ -45,36 +47,36 @@ sudo apt update && sudo apt full-upgrade
 
 :::warning 更新提示
 - 必须将系统所有软件包和内核更新到最新版本
-- 如果更新过程存在问题，可能是软件包源的问题或者系统软件包损坏，请自行搜索教程解决后再进行安装
+- 如果更新过程存在问题，可能是软件包源的问题或者系统软件包损坏，请自行搜索教程解决后再进行部署
 :::
 
-## 安装方法
+## 部署方法
 
-<AgreementGate hint="阅读协议并查看安装方法">
+<AgreementGate hint="阅读协议并查看部署方法">
 
-### 第一步：下载安装文件
+### 第一步：下载部署文件
 
 ```bash
-# 下载安装脚本
+# 下载部署脚本
 wget https://download.qvmconsole.xiaozhuhouses.asia/app1/latest/install.sh
 
 # 下载程序包
 wget https://download.qvmconsole.xiaozhuhouses.asia/app1/latest/kvm-console-linux-amd64.tar.gz
 ```
 
-### 第二步：执行安装
+### 第二步：执行部署
 
 ```bash
 bash install.sh
 ```
 
 :::info 注意事项
-安装期间安装脚本会自动处理依赖和网络等基础服务。请确保在**独立的会话环境**中运行安装命令，避免因中断造成安装失败。
+部署期间脚本会自动处理依赖和网络等基础服务。请确保在**独立的会话环境**中运行部署命令，避免因中断造成部署失败。
 :::
 
 ### 第三步：访问系统
 
-安装完毕后，使用以下方式访问：
+部署完毕后，使用以下方式访问：
 
 - **访问地址**：`http://你的服务器IP:设置的端口`
 - **默认账户**：`admin`

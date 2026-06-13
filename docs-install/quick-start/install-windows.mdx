@@ -1,0 +1,132 @@
+---
+sidebar_position: 3
+title: 安装 Windows
+description: 在 QVMConsole 中安装 Windows 虚拟机的完整指南
+---
+
+# 安装 Windows
+
+:::tip 前置阅读
+请确保已完成[基础设施配置](/docs/install/quick-start/infrastructure-config)（网络、存储池等），再进行虚拟机创建。
+:::
+
+## 必备文件
+
+开始安装前，请准备以下两个文件：
+
+1. **Windows 系统镜像（ISO）**
+   - 推荐从 [HelloWindows](https://hellowindows.cn/#) 下载原版镜像
+   - 请勿使用过度精简或来源不明的镜像，以免存在后门或损坏导致无法引导
+   - 种子下载的镜像务必校验 MD5 码，防止文件被污染
+
+2. **VirtIO 驱动镜像（ISO）**
+   - [Fedora 官网下载最新版](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/)
+   - [国内夸克网盘分流](https://pan.quark.cn/s/3710e5b22cfc)
+
+将上述两个文件上传至 ISO 存储位置。
+
+## 创建虚拟机
+
+在创建虚拟机时，在「安装镜像」下拉框中同时勾选系统镜像和 VirtIO 驱动镜像，其余配置按需选择。
+
+:::warning 重要提示
+Windows 11 和 Windows Server 2025 的引导方式**必须**选择 UEFI + 安全引导。
+:::
+
+## 进入安装流程
+
+桌面版 Windows 系统在开机连接 VNC 后，注意在出现 **「Press any key to boot from CD or DVD」** 提示时，需立即按下键盘任意键进入安装流程。该提示通常只会停留几秒钟。
+
+![按任意键启动](https://help-static.fnnas.com/images/74fc90f6-bca1-4cc4-b7c4-e57b65d9b80f.png)
+
+:::warning 注意
+若未及时按键，Windows 安装程序将自动进入 UEFI Shell 模式。此时可：
+- 强制关机后重新开机
+- 在 UEFI Shell 界面输入 `exit` 回车，然后选择 `continue` 回车重启
+:::
+
+![UEFI Shell 界面](https://help-static.fnnas.com/images/20250116144716848.png)
+
+## 加载 VirtIO 磁盘驱动
+
+在「选择安装 Windows 的位置」步骤中，若选择了 VirtIO 类型的磁盘，需要加载驱动程序才能识别虚拟硬盘。
+
+**操作步骤：**
+
+1. 确认虚拟机已挂载驱动 ISO 文件，点击「加载驱动」/「Load Driver」
+
+   ![加载驱动](https://help-static.fnnas.com/images/20241230144226572.png)
+
+2. 点击「确认」加载所有驱动
+
+   ![确认加载](https://help-static.fnnas.com/images/20241230144246874.png)
+
+3. 点击「浏览」，选择 CD 驱动器中的 `amd64/win11` 目录，点击确定
+
+   ![选择驱动目录](https://help-static.fnnas.com/images/20241230144303068.png)
+
+   > **目录命名规则：** Windows Server 2022 对应 `2k22`，Server 2019 对应 `2k19`，以此类推。
+
+4. 等待驱动搜索完成，选中「Red Hat VirtIO SCSI Controller」，点击安装
+
+   ![安装驱动](https://help-static.fnnas.com/images/20241230144318880.png)
+
+5. 驱动安装完成后，即可识别虚拟磁盘，按指引继续安装
+
+   ![磁盘识别成功](https://help-static.fnnas.com/images/20241230144338061.png)
+
+## 加载 VirtIO 网络驱动
+
+:::info 仅 Windows 11 需要
+此步骤主要针对 Windows 11 系统，会在网络配置阶段卡住。
+:::
+
+在初始化流程的「让我们为你连接到网络」步骤中，若选择了 VirtIO 网络类型，需要安装驱动程序。
+
+**操作步骤：**
+
+1. 确认虚拟机已挂载驱动 ISO 文件，点击「安装驱动程序」
+
+   ![安装网络驱动](https://help-static.fnnas.com/images/20241230144501716.png)
+
+2. 选择 CD 驱动器，点击「选择文件夹」
+
+   ![选择文件夹](https://help-static.fnnas.com/images/20241230144522003.png)
+
+3. 等待驱动搜索和安装完成，即可识别网络适配器
+
+## 安装过程中的常见问题
+
+:::warning 黑屏问题
+Windows 桌面版系统在安装重启时，可能会出现持续黑屏且 CPU 利用率在 18% 左右徘徊的情况。此时可**强制关机后重新开机**即可恢复正常。
+:::
+
+## 补全 VirtIO 驱动
+
+系统安装完成进入桌面后，需要补全 VirtIO 驱动和安装 Guest Tool。
+
+**安装 VirtIO 驱动：**
+
+找到并运行 `virtio-win-gt-x64.msi` 文件（32 位系统请选择 `virtio-win-gt-x86.msi`），按指引完成安装。
+
+![VirtIO 驱动安装](https://help-static.fnnas.com/images/20241230144929165.png)
+
+![安装完成](https://help-static.fnnas.com/images/20241230144945826.png)
+
+## 安装 QEMU Guest Agent
+
+QEMU Guest Agent 可以增强宿主机对虚拟机的控制能力，QVMConsole 的部分功能依赖此组件实现（如获取网卡 IP 地址等）。
+
+:::info 说明
+通常 VirtIO 驱动安装程序中不包含此工具，需要单独安装。
+:::
+
+双击安装如下所示的 Guest Agent 程序：
+
+![Guest Agent 安装](https://images.xiaozhuhouses.asia/i/2026/06/12/zcjqec.png)
+
+安装成功后，在 QVMConsole 虚拟机详情页面底部的「高级设置」中，QEMU Guest Agent 状态应显示为「已连接」，鼠标悬停可查看版本号。
+
+![Guest Agent 状态](https://images.xiaozhuhouses.asia/i/2026/06/12/zdkkzl.png)
+
+---

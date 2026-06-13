@@ -299,6 +299,294 @@ VPC 交换机与 OVS 网桥的关系如下：
 | **网络分配** | 虚拟机从交换机获取 IP 地址和网络配置 |
 | **流量统计** | 交换机统计连接虚拟机的网络流量 |
 
+## 安全策略技术原理
+
+### 桥接模式与杂模式
+
+#### 桥接模式（Bridge Mode）
+
+桥接模式是 VPC 交换机的基础工作模式，通过 OVS（Open vSwitch）实现二层网络交换。
+
+```mermaid
+graph TB
+    subgraph "OVS 网桥"
+        BR[br-ovs]
+    end
+    
+    subgraph "桥接端口"
+        P1[VM1 端口]
+        P2[VM2 端口]
+        P3[VM3 端口]
+    end
+    
+    subgraph "数据流向"
+        A[VM1 发送数据] --> B{OVS 查找 MAC 表}
+        B --> C[目标端口]
+        B --> D[泛洪到所有端口]
+    end
+    
+    BR --> P1
+    BR --> P2
+    BR --> P3
+```
+
+**桥接模式特点：**
+- **MAC 地址学习**：OVS 自动学习源 MAC 地址与端口的映射关系
+- **精确转发**：已知目标 MAC 的数据包只转发到对应端口
+- **泛洪处理**：未知目标 MAC 的数据包泛洪到所有端口（除来源端口）
+- **广播域隔离**：通过 VLAN 实现不同租户的广播域隔离
+
+#### 杂模式（Promiscuous Mode）
+
+杂模式控制虚拟机网卡是否可以接收所有经过的数据包。
+
+**no-flood 模式（默认，杂模式禁用）：**
+
+```mermaid
+sequenceDiagram
+    participant VM1 as 虚拟机 1
+    participant OVS as OVS 网桥
+    participant VM2 as 虚拟机 2
+    participant VM3 as 虚拟机 3
+    
+    VM1->>OVS: 发送数据包（目标 MAC: VM2）
+    OVS->>OVS: 查找 MAC 表
+    OVS->>VM2: 精确转发到 VM2
+    Note over VM3: VM3 无法接收此数据包
+```
+
+**flood 模式（杂模式启用）：**
+
+```mermaid
+sequenceDiagram
+    participant VM1 as 虚拟机 1
+    participant OVS as OVS 网桥
+    participant VM2 as 虚拟机 2
+    participant VM3 as 虚拟机 3
+    
+    VM1->>OVS: 发送数据包（目标 MAC: VM2）
+    OVS->>OVS: 查找 MAC 表
+    OVS->>VM2: 转发到 VM2
+    OVS->>VM3: 泛洪到 VM3
+    Note over VM3: VM3 可以接收此数据包（杂模式）
+```
+
+**技术实现细节：**
+
+QVMConsole 通过 OpenFlow 规则控制杂模式：
+
+| 模式 | OpenFlow 命令 | 效果 |
+|------|---------------|------|
+| **no-flood** | `ovs-ofctl mod-port <bridge> <port> no-flood` | 禁止泛洪，只接收目标 MAC 匹配的数据包 |
+| **flood** | `ovs-ofctl mod-port <bridge> <port> flood` | 允许泛洪，可接收所有数据包 |
+
+**安全影响：**
+- **禁用杂模式**：虚拟机只能接收到发送给自己的数据包，防止嗅探攻击
+- **启用杂模式**：虚拟机可以接收所有经过的数据包，可能被用于网络嗅探
+
+### MAC 地址更改
+
+#### 工作原理
+
+MAC 地址更改策略控制虚拟机是否可以修改其网络接口的 MAC 地址。
+
+**MAC 地址过滤机制：**
+
+```mermaid
+graph TB
+    subgraph "数据包处理流程"
+        A[虚拟机发送数据包] --> B{检查源 MAC}
+        B -->|MAC 匹配| C[允许通过]
+        B -->|MAC 不匹配| D[丢弃数据包]
+    end
+    
+    subgraph "MAC 地址绑定"
+        E[XML 配置的 MAC] --> F[绑定到虚拟机端口]
+        G[数据包源 MAC] --> H[与绑定 MAC 比较]
+    end
+```
+
+**OpenFlow 规则实现：**
+
+当 `allow_mac_change` 设置为 `false`（默认）时，QVMConsole 会创建以下 OpenFlow 规则：
+
+```bash
+# 允许特定 MAC 地址的数据包通过
+cookie=<cookie>,priority=90,in_port=<ofport>,dl_src=<mac>,actions=NORMAL
+
+# 丢弃其他源 MAC 的数据包
+cookie=<cookie>,priority=85,in_port=<ofport>,actions=drop
+```
+
+**规则说明：**
+- **优先级 90**：允许来自配置 MAC 地址的数据包
+- **优先级 85**：丢弃所有其他源 MAC 的数据包
+- **NORMAL 动作**：按正常交换逻辑处理数据包
+
+#### 安全意义
+
+| 策略状态 | 效果 | 安全风险 |
+|----------|------|----------|
+| **禁用（默认）** | 虚拟机只能使用配置的 MAC 地址 | 防止 MAC 地址欺骗 |
+| **启用** | 虚拟机可以使用任意 MAC 地址 | 可能导致 MAC 地址冲突和欺骗攻击 |
+
+### 伪传输（Forged Transmits）
+
+#### 工作原理
+
+伪传输策略控制虚拟机是否可以发送源 MAC 地址与配置 MAC 不匹配的数据包。
+
+**与 MAC 地址更改的关系：**
+- **MAC 地址更改**：控制虚拟机是否可以**接收**非配置 MAC 的数据包
+- **伪传输**：控制虚拟机是否可以**发送**源 MAC 不匹配的数据包
+
+**技术实现：**
+
+伪传输与 MAC 地址更改共享相同的 OpenFlow 规则机制：
+
+```mermaid
+graph LR
+    subgraph "MAC 过滤规则"
+        A[allow_mac_change=false] --> B[创建源 MAC 过滤规则]
+        C[allow_forged_transmits=false] --> D[创建源 MAC 过滤规则]
+    end
+    
+    subgraph "规则效果"
+        B --> E[限制入站数据包]
+        D --> F[限制出站数据包]
+    end
+```
+
+**代码实现逻辑：**
+
+```go
+// 从 switch_bandwidth.go 源码
+restrictSourceMAC := !sw.AllowMACChange || !sw.AllowForgedTransmits
+if restrictSourceMAC && strings.TrimSpace(item.MAC) != "" {
+    // 允许特定 MAC 地址
+    flows = append(flows, fmt.Sprintf("cookie=%s,priority=90,in_port=%s,dl_src=%s,actions=NORMAL", 
+        cookie, item.OFPort, item.MAC))
+    // 丢弃其他 MAC 地址
+    flows = append(flows, fmt.Sprintf("cookie=%s,priority=85,in_port=%s,actions=drop", 
+        cookie, item.OFPort))
+}
+```
+
+**逻辑说明：**
+- 只要 `allow_mac_change` 或 `allow_forged_transmits` 中**任意一个**为 `false`
+- 系统就会创建 MAC 地址过滤规则
+- 规则同时限制入站和出站的 MAC 地址匹配
+
+### 安全策略组合效果
+
+#### 策略组合矩阵
+
+| allow_promiscuous | allow_mac_change | allow_forged_transmits | 安全级别 | 适用场景 |
+|-------------------|------------------|------------------------|----------|----------|
+| false | false | false | **最高** | 生产环境、多租户环境 |
+| false | false | true | **高** | 需要特殊 MAC 配置的场景 |
+| false | true | false | **中** | MAC 地址需要动态调整 |
+| true | false | false | **中** | 需要网络监控的场景 |
+| true | true | true | **低** | 测试环境、特殊需求 |
+
+#### 策略组合工作流程
+
+```mermaid
+flowchart TB
+    A[虚拟机启动] --> B[应用安全策略]
+    B --> C{检查 allow_promiscuous}
+    C -->|false| D[设置 no-flood 模式]
+    C -->|true| E[设置 flood 模式]
+    
+    B --> F{检查 MAC 策略}
+    F -->|MAC 受限| G[创建 OpenFlow 规则]
+    F -->|MAC 不受限| H[不创建过滤规则]
+    
+    G --> I[允许配置 MAC]
+    G --> J[丢弃其他 MAC]
+    
+    D --> K[完成配置]
+    E --> K
+    H --> K
+    I --> K
+    J --> K
+```
+
+### 实际应用场景
+
+#### 场景 1：多租户云环境
+
+**需求：** 严格的网络隔离，防止租户间互相嗅探
+
+**配置：**
+- `allow_promiscuous = false`（禁用杂模式）
+- `allow_mac_change = false`（禁止 MAC 更改）
+- `allow_forged_transmits = false`（禁止伪传输）
+
+**效果：**
+- 每个租户只能看到自己的网络流量
+- 无法通过修改 MAC 地址进行攻击
+- 无法伪造源 MAC 地址进行欺骗
+
+#### 场景 2：网络监控环境
+
+**需求：** 需要监控所有网络流量
+
+**配置：**
+- `allow_promiscuous = true`（启用杂模式）
+- `allow_mac_change = false`（禁止 MAC 更改）
+- `allow_forged_transmits = false`（禁止伪传输）
+
+**效果：**
+- 监控虚拟机可以接收所有网络流量
+- 其他虚拟机仍然受到 MAC 过滤保护
+- 防止 MAC 地址欺骗攻击
+
+#### 场景 3：测试开发环境
+
+**需求：** 灵活的网络配置，便于测试
+
+**配置：**
+- `allow_promiscuous = true`（启用杂模式）
+- `allow_mac_change = true`（允许 MAC 更改）
+- `allow_forged_transmits = true`（允许伪传输）
+
+**效果：**
+- 完全开放的网络环境
+- 便于进行网络测试和调试
+- 不推荐用于生产环境
+
+### 配置建议
+
+#### 生产环境推荐配置
+
+```yaml
+# 生产环境安全配置
+security_policy:
+  allow_promiscuous: false
+  allow_mac_change: false
+  allow_forged_transmits: false
+```
+
+#### 特殊需求配置
+
+```yaml
+# 网络监控配置
+security_policy:
+  allow_promiscuous: true
+  allow_mac_change: false
+  allow_forged_transmits: false
+```
+
+:::warning[安全风险提示]
+启用杂模式、MAC 地址更改或伪传输可能带来安全风险，包括：
+- **网络嗅探**：攻击者可以捕获其他虚拟机的网络流量
+- **ARP 欺骗**：通过伪造 MAC 地址进行中间人攻击
+- **MAC 泛洪**：通过大量伪造 MAC 地址攻击交换机
+
+除非有明确的业务需求，建议保持所有安全策略为禁用状态。
+:::
+
 ## 最佳实践
 
 ### 交换机规划建议
