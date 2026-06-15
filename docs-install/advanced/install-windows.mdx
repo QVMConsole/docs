@@ -10,29 +10,6 @@ description: 在 QVMConsole 中安装 Windows 虚拟机的完整指南
 请确保已完成[基础设施配置](/docs/install/quick-start/infrastructure-config)（网络、存储池等），再进行虚拟机创建。
 :::
 
-## 必备文件
-
-开始安装前，请准备以下两个文件：
-
-1. **Windows 系统镜像（ISO）**
-   - 推荐从 [HelloWindows](https://hellowindows.cn/#) 下载原版镜像
-   - 请勿使用过度精简或来源不明的镜像，以免存在后门或损坏导致无法引导
-   - 种子下载的镜像务必校验 MD5 码，防止文件被污染
-
-2. **VirtIO 驱动镜像（ISO）**
-   - [Fedora 官网下载最新版](https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/)
-   - [国内夸克网盘分流](https://pan.quark.cn/s/3710e5b22cfc)
-
-将上述两个文件上传至 ISO 存储位置。
-
-## 创建虚拟机
-
-在创建虚拟机时，在「安装镜像」下拉框中同时勾选系统镜像和 VirtIO 驱动镜像，其余配置按需选择。
-
-:::warning 重要提示
-Windows 11 和 Windows Server 2025 的引导方式**必须**选择 UEFI + 安全引导。
-:::
-
 ## 进入安装流程
 
 桌面版 Windows 系统在开机连接 VNC 后，注意在出现 **「Press any key to boot from CD or DVD」** 提示时，需立即按下键盘任意键进入安装流程。该提示通常只会停留几秒钟。
