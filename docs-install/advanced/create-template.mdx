@@ -4,13 +4,16 @@ title: 制作模板
 description: 学习如何将虚拟机制作为模板，实现快速批量部署
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # 制作模板
 
 :::tip 前置阅读
 请先阅读[模板管理](/docs/install/quick-start/template-management)了解模板的基本概念和使用方式。
 :::
 
-模板是 QVMConsole 实现**毫秒级创建虚拟机**的核心功能。通过将一台精心配置的虚拟机制作为模板，您可以快速克隆出多台相同配置的虚拟机。
+模板是 QVMConsole 实现**秒级创建虚拟机**的核心功能。通过将一台精心配置的虚拟机制作为模板，您可以快速克隆出多台相同配置的虚拟机。
 
 ## 工作原理
 
@@ -166,12 +169,35 @@ Windows 11 默认启用了磁盘加密（BitLocker），**必须先关闭磁盘�
 
 相比 Windows，Linux 模板的制作过程更加简单快捷。
 
-### 基本步骤
+先按照 [安装 Linux](install-linux.mdx) 文档安装好 Linux 系统
 
-1. 按照 [安装 Linux](install-linux.mdx) 文档安装好 Linux 系统
-2. 安装所需的工具和配置环境
-3. 直接关机
-4. 在虚拟机列表中选择"制作模板"
+然后安装下面初始化工具
+
+<Tabs>
+  <TabItem value="debian" label="Debian/Ubuntu" default>
+
+```bash
+apt-get install -y cloud-init cloud-guest-utils
+```
+
+  </TabItem>
+  <TabItem value="centos" label="CentOS/RHEL (yum)">
+
+```bash
+yum install -y cloud-init cloud-utils-growpart
+```
+
+  </TabItem>
+  <TabItem value="fedora" label="Fedora/Rocky/Alma (dnf)">
+
+```bash
+dnf install -y cloud-init cloud-utils-growpart
+```
+
+  </TabItem>
+</Tabs>
+
+最后直接关机，制作模板即可
 
 ![制作 Linux 模板](https://images.xiaozhuhouses.asia/i/2026/06/13/h5h5l7.png)
 
@@ -183,7 +209,17 @@ Windows 11 默认启用了磁盘加密（BitLocker），**必须先关闭磁盘�
 :::
 
 ---
+## 制作 OpenWrt 模板
 
+OpenWrt模板制作非常简单，只需要从自己想要的分支固件官网下载img后导入虚拟机确保能够正常开机即可，然后直接关机制作模板，一般选择openwrt类型即可，然后基于模板创建虚拟机测试。
+
+---
+
+## 制作 FnOS 模板 
+
+FnOS模板制作非常简单，只需要前往飞牛官网下载ISO正常安装飞牛后进入系统，此时**不需要初始化飞牛**直接关机制作模板选择FnOS即可
+
+---
 ## 模板使用建议
 
 1. **定期更新模板**：及时更新系统补丁和软件版本
