@@ -231,6 +231,21 @@ FnOS模板制作非常简单，只需要前往飞牛官网下载ISO正常安装�
 
 一般情况您可以直接下载导入作者的模板，然后初始化进入系统后您可以直接安装所需软件然后不需要运行`Sysprep`直接关机，直接制作模板即可。克隆虚拟机也是一样的方法。然后您可以在模板管理中对应模板的下拉框中看到子版本的模板信息。
 
+## Linux启动后命令
+
+此功能允许在系统完成初始化后后台自动执行命令，通常可以用于配置自己的业务环境和更换镜像源
+
+`等待命令执行完毕后再启动 SSH`用于必须要等待命令执行完毕后才允许用户使用的场景，通过阻止SSH实现禁止功能。
+
+### 更换镜像源
+
+可以使用[linuxmirrors](https://linuxmirrors.cn/)的脚本来完成自动换源
+
+```bash
+bash <(curl -sSL https://gitee.com/SuperManito/LinuxMirrors/raw/main/ChangeMirrors.sh) --source mirrors.aliyun.com --protocol http --use-intranet-source false  --install-epel true --backup false --upgrade-software false --clean-cache false --ignore-backup-tips
+```
+然后勾选 `等待命令执行完毕后再启动 SSH`
+
 ## 相关文档
 
 - [模板管理](/docs/install/quick-start/template-management) - 了解模板的管理和使用
