@@ -1,0 +1,19 @@
+---
+sidebar_position: 2
+title: 已知报错
+description: QVMConsole 已知错误及解决方案
+---
+
+## 无法载入AppArmor 侧写
+passt包与AppArmor 不兼容：通常是您的软件包和系统版本不匹配造成的AppArmor 底层返回的错误，请更换为与系统版本匹配的软件包源后重新执行更新所有软件包命令
+```bash
+sudo apt update && sudo apt upgrade
+```
+
+## 获取域xxx元数据失败：未找到元数据：所需元数据元素未出现
+中文系统造成命令输出差异：请将系统语言修改为英语后重启
+```bash
+sudo dpkg-reconfigure locales
+# 在弹出的语言列表界面中，使用方向键找到 en_US.UTF-8 UTF-8，按下空格键将其选中（选中后前面会出现星号 *），然后按回车键确认。接着系统会询问默认的系统语言环境，选择 en_US.UTF-8 并确认。配置完成后，重启系统使设置生效：
+sudo reboot
+```
