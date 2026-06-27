@@ -6,12 +6,22 @@ slug: /
 ---
 
 import AgreementGate from '@site/src/components/AgreementGate';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # 部署
 
 本页面介绍 QVMConsole 的部署方法和系统要求。
 
 ## 系统要求
+
+### 架构兼容
+
+| 架构 | 说明 |
+|------|------|
+| **x86_64 / AMD64** | Intel 及 AMD 64 位处理器 |
+| **ARM64 / AArch64** | 64 位 ARM 处理器（已测试兼容：华为鲲鹏系列） |
+
 
 ### 兼容系统
 
@@ -80,12 +90,24 @@ reboot
 ### 第一步：下载部署文件
 
 ```bash
-# 下载部署脚本
+# 下载部署脚本（通用）
 wget https://download.qvmconsole.xiaozhuhouses.asia/app1/latest/install.sh
-
-# 下载程序包
-wget https://download.qvmconsole.xiaozhuhouses.asia/app1/latest/kvm-console-linux-amd64.tar.gz
 ```
+
+根据架构选择下载对应的程序包：
+
+<Tabs>
+  <TabItem value="amd64" label="AMD64">
+    ```bash
+    wget https://download.qvmconsole.xiaozhuhouses.asia/app1/latest/kvm-console-linux-amd64.tar.gz
+    ```
+  </TabItem>
+  <TabItem value="arm64" label="ARM64">
+    ```bash
+    wget https://download.qvmconsole.xiaozhuhouses.asia/app1/latest/kvm-console-linux-arm64.tar.gz
+    ```
+  </TabItem>
+</Tabs>
 
 ### 第二步：执行部署
 
