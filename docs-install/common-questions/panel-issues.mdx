@@ -17,3 +17,14 @@ description: QVMConsole 面板相关常见问题解答
 按`F12`然后找到下图中的并操作
 ![](https://images.xiaozhuhouses.asia/i/2026/06/22/10e01q8.png)
 刷新页面即可
+
+## 【赞助版】绑定激活码报错403
+系统时间不对，请校准系统时间
+```bash
+# 查看当前时间
+date
+# 同步时间（如果偏差大）
+sudo ntpdate -u ntp.aliyun.com
+# 或
+sudo timedatectl set-ntp true
+```
