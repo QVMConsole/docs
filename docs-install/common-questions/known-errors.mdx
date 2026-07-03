@@ -1,6 +1,6 @@
 ---
 sidebar_position: 2
-title: 已知报错
+title: 常见问题及报错
 description: QVMConsole 已知错误及解决方案
 ---
 
@@ -9,3 +9,11 @@ passt包与AppArmor 不兼容：通常是您的软件包和系统版本不匹配
 ```bash
 sudo apt update && sudo apt upgrade
 ```
+
+## 统信UOS ISO引导错误`Synchronous Exception`
+此问题一般是在Linux7内核的系统上由于UEFI固件较新与较老内核存在UEFI引导兼容问题。v0.1.4.5及以上可以在高级设置中启用`UEFI固件兼容模式`即可。
+
+同时可能还会伴随能引导后卡在正在加载内核的问题，可以同时开启`直接内核引导`
+:::warning 注意
+`直接内核引导`在安装完毕系统后需要关闭才可以正常进入系统
+:::
