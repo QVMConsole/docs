@@ -17,3 +17,11 @@ sudo apt update && sudo apt upgrade
 :::warning 注意
 `直接内核引导`在安装完毕系统后需要关闭才可以正常进入系统
 :::
+
+## AMD核显直通43
+此问题因素较多，目前已知可能是AMD通病，可以参考国外大佬帖子有能力自己去尝试一下，作者测试了一个设备貌似不行。
+
+[Ryzen APU iGPU Passthrough (Renoir / Cezanne)](https://github.com/dmuiX/ryzen-apu-passthrough-guide)
+
+## 英伟达独显直通43
+属于是驱动限制，检测到KVM虚拟化环境则拒绝加载，解决方法就是在编辑虚拟机设置的高级选项中开启`隐藏 KVM 标志`并配置`Vendor ID 伪装`(值我也不知道，手头没设备，期待社区有人测试贡献下:）)

@@ -20,7 +20,7 @@ import TabItem from '@theme/TabItem';
 | 架构 | 说明 |
 |------|------|
 | **x86_64 / AMD64** | Intel 及 AMD 64 位处理器 |
-| **ARM64 / AArch64** | 64 位 ARM 处理器（已测试兼容：华为鲲鹏系列） |
+| **ARM64 / AArch64** | 64 位 ARM 处理器|
 
 
 ### 兼容系统
@@ -78,6 +78,7 @@ sudo apt update && sudo apt full-upgrade
 # 重启确保新内核应用更改
 reboot
 ```
+> 如果执行报错一般是源的问题，可以使用这个脚本一键换源 [linuxmirrors](https://linuxmirrors.cn/)
 
 :::warning 更新提示
 - 必须将系统所有软件包和内核更新到最新版本
