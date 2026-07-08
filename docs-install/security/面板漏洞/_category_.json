@@ -1,0 +1,8 @@
+{
+  "label": "面板漏洞",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "QVMConsole 面板相关安全漏洞公告"
+  }
+}
