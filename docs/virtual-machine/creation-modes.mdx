@@ -144,10 +144,15 @@ graph TB
 
 ### 工作流程
 
-1. 选择目标模板
-2. 系统直接创建基于模板的 backing 磁盘
-3. 定义虚拟机并启动
-4. 保留模板内的所有原始配置
+1. 选择目标模板（模板类型支持 `linux` / `windows` / `fnos` / `openwrt` / `other`）
+2. 系统根据模板类型自动选择初始化策略：
+   - Linux：cloud-init NoCloud 离线注入
+   - Windows：CloudbaseInit + ConfigDrive
+   - FnOS：virt-customize 注入管理员账号与设备 ID
+   - OpenWrt：virt-customize（ext4 布局）或 guestfish 写入 overlay upper（squashfs 布局，如 iStoreOS），并要求传入静态 IP/网关/DNS
+3. 创建 backing 磁盘（链式克隆）或完整复制磁盘（完整克隆）
+4. 写入首启动身份（主机名、用户、密码）
+5. 定义虚拟机并启动
 
 ## 导入已有磁盘
 

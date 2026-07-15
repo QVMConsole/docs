@@ -79,51 +79,71 @@ graph TB
 
 ```
 server/
-├── main.go              # 程序入口，启动流程编排
+├── main.go              # 程序入口，启动流程编排、任务处理器注册
 ├── config/              # 配置管理（环境变量 > 数据库 > 默认值）
 │   └── config.go
 ├── router/              # 路由定义与中间件注册
 │   └── router.go
-├── handler/             # HTTP 请求处理层
-│   ├── auth.go          # 认证相关（登录/登出/2FA）
-│   ├── vm.go            # 虚拟机管理
-│   ├── vm_sse.go        # VM 实时推送
-│   ├── network.go       # 网络管理
-│   ├── template.go      # 模板管理
-│   ├── user.go          # 用户管理
-│   ├── task.go          # 任务队列接口
+├── handler/             # HTTP 请求处理层（按域划分）
+│   ├── auth.go / user_self.go / api_key.go   # 认证、用户自助、API Key
+│   ├── vm.go / vm_sse.go / vm_create.go / vm_schedule.go / vm_rescue.go / vm_independent.go / vm_passthrough.go / vm_lock.go / vm_monitor.go / vm_export_import.go / linked_clone.go
+│   ├── network.go / network_bridge.go / network_diagnostics.go / vpc.go
+│   ├── firewall.go / public_ip.go / storage_pool.go
+│   ├── template.go / template_transfer.go
+│   ├── snapshot.go / task.go / scheduler.go
+│   ├── diagnostics.go / vnc.go / spice.go / share.go
 │   └── ...
-├── middleware/          # 中间件
-│   ├── auth.go          # JWT/API Key 认证
-│   └── cors.go          # CORS 跨域
+├── middleware/          # 中间件链
+│   ├── auth.go / fingerprint.go               # 认证、JWT/API Key
+│   ├── cors.go                                # CORS 跨域
+│   ├── request_logger.go / request_filter.go / request_guard.go
+│   ├── ratelimit.go / security_headers.go     # 限流、安全响应头
+│   └── security_helper.go
 ├── model/               # 数据模型（GORM 实体）
-│   ├── db.go            # 数据库初始化与自动迁移
-│   ├── user.go          # 用户模型
-│   ├── vm_cache.go      # VM 缓存模型
-│   ├── task.go          # 任务模型
-│   └── ...
-├── service/             # 业务逻辑层
-│   ├── vm/              # 虚拟机服务（创建/生命周期/缓存/详情）
-│   │   ├── create.go    # VM 创建逻辑
-│   │   ├── lifecycle.go # 生命周期操作（开机/关机/重启）
-│   │   ├── runtime.go   # 运行时状态管理
-│   │   ├── cache.go     # 缓存同步
-│   │   ├── list.go      # 列表查询
-│   │   ├── detail.go    # 详情查询
-│   │   └── deps.go      # 依赖注入容器
-│   ├── network/         # 网络服务
-│   │   ├── vpc/         # VPC 交换机与 ACL
-│   │   ├── port_forward.go    # 端口转发
-│   │   ├── static_ip.go       # 静态 IP
-│   │   └── diagnostics/       # 网络诊断
-│   ├── firewall/        # 防火墙策略
-│   ├── ovs/             # Open vSwitch 集成
-│   ├── security/        # 安全服务（JWT 密钥/令牌）
-│   └── scheduler/       # 调度器事件中心
+│   ├── db.go            # 数据库初始化、自动迁移、版本兼容
+│   ├── user.go / user_api_key.go / user_storage.go / user_traffic_daily.go
+│   ├── vm_cache.go / vm_lock.go / vm_schedule.go / vm_stats_record.go / vm_credential.go
+│   ├── storage_pool.go / public_ip.go / vpc.go / network_bridge.go
+│   ├── task.go / upload_session.go / scheduler_event.go
+│   ├── auth_action_token.go / security_challenge.go / system_setting.go
+│   ├── host_node.go / host_stats_record.go / lightweight_cloud.go / lightweight_vm_registration.go
+│   └── port_forward_*.go
+├── service/             # 业务逻辑层（按域分包）
+│   ├── vm/                       # 虚拟机（创建/生命周期/缓存/详情/独立化/密码/监控/迁移）
+│   │   ├── create.go / lifecycle.go / runtime.go / list.go / detail.go
+│   │   ├── memory/ migration/ vmimport/ vm_xml/  # 内存、迁移、导入、XML 装配
+│   │   ├── cpu.go / cpu_affinity.go / cpu_topology.go / cpu_limit.go
+│   │   ├── passthrough.go / password_reset.go / monitor.go / lock.go
+│   │   ├── independent.go / export.go / config.go / config_metadata.go
+│   │   └── deps.go              # 子包 Deps 容器
+│   ├── clone/                    # 克隆、批量克隆、重装、删除、初始化
+│   ├── template/                 # 模板元数据、树形版本、上传/下载/导入导出
+│   ├── snapshot/                 # 内部/外部快照、NVRAM、overlay、锁、配额
+│   ├── network/                  # VPC、端口转发、ACL、桥接、静态 IP、诊断
+│   │   ├── vpc/ bridge/ probe/ diagnostics/
+│   ├── firewall/                 # 宿主机防火墙 + KVM 防火墙
+│   ├── bandwidth/                # 全局/VM/OVS 带宽限速
+│   ├── ovs/                      # Open vSwitch 集成
+│   ├── public_ip/                # 公网 IP 1:1 NAT/路由/桥接
+│   ├── storage/                  # 存储池、磁盘、IOPS
+│   ├── share/                    # 9p 共享目录
+│   ├── spice/                    # SPICE 控制台
+│   ├── vnc/                      # VNC 控制台
+│   ├── scheduler/                # 调度事件中心
+│   ├── rescue/                   # 救援系统
+│   ├── lightweight/              # 轻量云管理
+│   ├── user/                     # 用户、配额、SSH
+│   ├── security/                 # JWT 密钥、令牌、TOTP、密码强度
+│   ├── guest_agent/              # QEMU Guest Agent 通信
+│   ├── ip_resolver/              # VM IP 解析
+│   ├── libvirt_rpc/              # go-libvirt RPC 封装
+│   ├── arch/                     # 架构探测（x86_64 / aarch64）
+│   ├── upload/                   # 分片上传
+│   ├── traffic/                  # 流量配额
+│   └── *_register.go / *_wire.go # 根包 ↔ 子包依赖注入适配
 ├── taskqueue/           # 任务队列内核
 │   └── queue.go         # 任务提交/分发/执行/SSE/清理
-└── utils/               # 工具函数
-    └── cmd.go           # 系统命令执行
+└── utils/               # 工具函数（命令执行、文件系统、进程）
 ```
 
 ### 启动流程
@@ -136,22 +156,25 @@ sequenceDiagram
     participant Cfg as 配置初始化
     participant Log as 日志系统
     participant DB as 数据库
-    participant RPC as libvirt RPC
+    participant RPC as go-libvirt RPC
     participant Cache as VM 缓存
     participant Task as 任务队列
+    participant Sched as 后台调度器
     participant Router as 路由
     participant HTTP as HTTP 服务
 
-    Main->>Cfg: Init() 加载配置
+    Main->>Cfg: Init() 加载默认配置
     Main->>Log: InitWithConsoleConfig() 初始化日志
-    Main->>DB: InitDB() 初始化数据库
+    Main->>DB: InitDB() 初始化数据库（GORM + SQLite）
     Main->>Cfg: LoadFromDB(savedSettings) 合并持久化配置
-    Main->>RPC: InitLibvirtRPC() 建立连接
+    Main->>RPC: InitLibvirtRPC() 建立 go-libvirt 连接
     Main->>Cache: BootstrapVMCacheFromHost() 同步缓存
     Main->>Main: ValidateSecurity() 安全检查
     Main->>Task: registerTaskHandlers() 注册处理器
     Main->>Task: Start(workers=3) 启动工作线程
-    Main->>Main: StartStatsCollector() 启动后台采集
+    Main->>Sched: StartStatsCollector / 气球调度器 / 调度事件清理 / 端口探测 / 定时任务 / JWT 密钥轮转 / 上传会话清理
+    Main->>Sched: SyncSSHDenyConfig / EnsureAllActiveUsersDefaultSecurityGroup
+    Main->>Sched: EnsureSystemBaseNetwork / 桥接恢复 / 端口转发恢复 / VPC 恢复 / 公网 IP 规则恢复
     Main->>Router: Setup() 设置路由
     Main->>HTTP: r.Run(":port") 启动 HTTP 服务
 ```
@@ -202,39 +225,51 @@ graph TB
 
 ```mermaid
 flowchart TD
-    Request[HTTP 请求] --> CORS[CORS 中间件<br/>处理跨域请求]
-    CORS --> RateLimit[限流中间件<br/>API 请求频率控制]
-    RateLimit --> Log[请求日志中间件<br/>记录请求信息]
-    Log --> Auth[认证中间件<br/>JWT/API Key 验证]
-    Auth --> Admin[管理员中间件<br/>权限检查]
-    Admin --> ElasticCloud[ElasticCloud 中间件<br/>轻量云用户限制]
-    ElasticCloud --> VMAccess[VM 访问中间件<br/>虚拟机归属验证]
+    Request[HTTP 请求] --> ReqLog[请求日志中间件<br/>记录请求信息]
+    ReqLog --> Recover[安全恢复中间件<br/>panic 兜底]
+    Recover --> CORS[CORS 中间件<br/>处理跨域请求]
+    CORS --> SecHdr[安全响应头中间件<br/>注入安全头]
+    SecHdr --> ReqFilter[请求过滤中间件<br/>拦截异常请求]
+    ReqFilter --> ReqGuard[请求守卫中间件<br/>补充防护]
+    ReqGuard --> RateLimit[限流中间件<br/>API 请求频率控制]
+    RateLimit --> Auth[认证中间件<br/>JWT/API Key 验证]
+    Auth --> PwdChange[强制改密中间件]
+    PwdChange --> Admin[管理员中间件<br/>权限检查]
+    Admin --> Elastic[ElasticCloud 中间件<br/>轻量云用户限制]
+    Elastic --> VMAccess[VM 访问中间件<br/>虚拟机归属验证]
     VMAccess --> Handler[处理器]
     Handler --> Response[HTTP 响应]
 ```
 
 | 中间件 | 功能 | 应用范围 |
 |--------|------|----------|
+| `RequestLoggerMiddleware` | 记录请求路径、方法、耗时等 | 全局 |
+| `SafeRecoveryMiddleware` | panic 兜底，避免单个请求导致进程退出 | 全局 |
 | `CORSMiddleware` | 处理跨域请求，设置 CORS 头 | 全局 |
+| `SecurityHeadersMiddleware` | 注入安全相关响应头 | 全局 |
+| `RequestFilterMiddleware` | 过滤异常/恶意请求 | 全局 |
+| `RequestGuardMiddleware` | 通用请求守卫（兜底防护） | 全局 |
 | `RateLimitMiddleware` | API 请求频率控制，防止滥用 | 全局 |
-| `RequestLogMiddleware` | 记录请求路径、方法、耗时 | 全局 |
 | `AuthMiddleware` | JWT 令牌/API Key 验证，注入用户身份 | 需要认证的接口 |
+| `ForcePasswordChangeMiddleware` | 强制要求修改初始/重置密码后才能继续 | 需要认证的接口 |
 | `AdminMiddleware` | 管理员权限验证 | 管理员接口 |
 | `ElasticCloudOnlyMiddleware` | 轻量云用户功能限制 | 轻量云专属功能 |
 | `VMAccessMiddleware` | 虚拟机归属权限验证 | VM 操作接口 |
 
 ### 依赖注入机制
 
-服务层通过依赖容器实现松耦合，避免循环依赖：
+服务层通过手工实现的 `Deps` 容器实现子包与根包之间的解耦，避免循环 import：
 
 ```mermaid
 classDiagram
     class Deps {
-        +DB : *gorm.DB
-        +Config : *config.Config
-        +Libvirt : *libvirtRPC
-        +OVS : OVSEngine
-        +TaskQueue : *TaskQueue
+        +FirstNonEmpty func(...)
+        +IsMaintenanceModeEnabled func() bool
+        +GetVMBandwidthMbps func(...)
+        +FindVMOwner func(...) string
+        +ValidateStrongPassword func(...) error
+        +CloneUsernameRegexp *regexp.Regexp
+        +...其它字段（函数指针为主）
     }
 
     class VMService {
@@ -265,10 +300,10 @@ classDiagram
 
 | 特点 | 说明 |
 |------|------|
-| **向上依赖** | 下层模块可以依赖上层模块的接口 |
-| **接口隔离** | 通过 Hook 机制定义抽象依赖 |
-| **依赖注入** | 通过 Deps 容器集中注入依赖 |
-| **Wire 适配器** | 集中注册 Hook，屏蔽实现差异 |
+| **Deps 容器** | 每个子包（`vm`、`clone`、`template`、`snapshot` 等）定义一个 `Deps` 结构体，承载其所需的外部依赖（多为函数指针） |
+| **手工注入** | `main.go` 启动时调用 `InitDeps(&Deps{...})` 一次性注入到子包的包级变量 `D` |
+| **循环 import 规避** | 子包通过 `D.XXX()` 反向调用根包函数，避免根包反向 import 子包造成的循环 |
+| **Hook 接口** | 横切关注点（如网桥名、iptables 规则、状态查询）通过 Hook 函数隔离，运行时由适配层注册 |
 
 ### 请求处理流程
 

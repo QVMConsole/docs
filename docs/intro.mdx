@@ -198,10 +198,12 @@ bash start-dev.sh
 
 | 组件 | 技术 |
 |------|------|
-| 前端 | Vue.js 3 + Vite |
-| 后端 | Go (Gin) + libvirt |
-| 数据库 | SQLite |
-| 虚拟化 | KVM/QEMU |
+| 前端 | Vue.js 3 + Vite + Element Plus + Pinia + Axios |
+| 后端 | Go (Gin) + go-libvirt (digitalocean/go-libvirt) + GORM |
+| 数据库 | SQLite（GORM 自动迁移） |
+| 虚拟化 | KVM/QEMU，通过 go-libvirt RPC 通信 |
+| 网络 | Open vSwitch (OVS) + Linux Bridge，nftables/iptables |
+| 任务调度 | 自研任务队列（goroutine + 有界 channel + SSE 推送） |
 
 ## 相关链接
 

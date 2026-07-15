@@ -16,21 +16,24 @@ graph TD
     B -->|Linux| C["cloud-init NoCloud 初始化"]
     B -->|Windows| D["CloudbaseInit + ConfigDrive 初始化"]
     B -->|FnOS| E["FnOS 离线注入初始化"]
+    B -->|OpenWrt| O["OpenWrt 离线注入初始化（virt-customize / guestfish）"]
     B -->|Other| F["直接复制磁盘，不初始化"]
     B -->|cloud_init_mode=none| F
 
     C --> G["virt-customize 离线注入"]
     D --> H["virt-customize + guestfish 注入"]
     E --> G
+    O --> P["virt-customize 注入或 guestfish 写入 overlay upper"]
     G --> I["定义虚拟机并启动"]
     H --> I
+    P --> I
     F --> I
 
     I --> J["首次启动自动完成配置"]
 ```
 
 :::tip 离线初始化的优势
-QVMConsole 的初始化完全在**离线阶段**（虚拟机启动前）通过 `virt-customize` 和 `guestfish` 工具完成，无需 SSH 连接虚拟机，也不依赖虚拟机网络状态，可靠性极高。
+QVMConsole 的初始化完全在**离线阶段**（虚拟机启动前）通过 `virt-customize` 和 `guestfish` 工具完成，无需 SSH 连接虚拟机，也不依赖虚拟机网络状态，可靠性极高。OpenWrt 因使用 BusyBox、缺少 `setarch` 等工具，所有修改仅通过文件注入完成，不使用 `--run-command`。
 :::
 
 ---

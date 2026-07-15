@@ -154,39 +154,29 @@ graph LR
 ```mermaid
 graph TB
     subgraph 宿主机
-        A[物理硬盘] --> B[分区]
-        B --> C[文件系统]
-        C --> D[挂载点]
+        A[物理硬盘 / 分区 / LVM] --> B[文件系统]
+        B --> C[挂载点]
     end
-    
-    subgraph libvirt
-        E[存储池 API]
-        F[存储卷管理]
-    end
-    
+
     subgraph QVMConsole
-        G[存储池配置]
-        H[虚拟机创建]
+        D[lsblk 读取块设备] --> E[挂载点 + 容量/使用率]
+        E --> F[存储池配置（DB）]
+        F --> G[VM 磁盘落盘路径]
     end
-    
-    D --> E
-    E --> F
-    F --> G
-    G --> H
-    
-    style A fill:#e1f5fe
-    style E fill:#f3e5f5
-    style G fill:#e8f5e8
+
+    C --> D
+    G --> H[VM 磁盘文件]
 ```
 
 ### 核心机制
 
 | 组件 | 功能说明 |
 |------|----------|
-| **libvirt 存储池 API** | 底层存储管理接口，负责磁盘和分区的操作 |
-| **默认存储池** | 虚拟机创建时的默认落盘位置，简化创建流程 |
-| **格式化操作** | 将磁盘格式化为 ext4 文件系统并挂载到指定目录 |
-| **配置持久化** | 存储池配置信息保存在后端数据库中，重启后保留 |
+| **块设备探测** | 通过 `lsblk -J` 获取硬盘、分区、LVM 卷组/逻辑卷的层级信息，运行时始终从系统命令读取，不依赖数据库 |
+| **配置持久化** | 存储池的 `display_name` / `enabled` / `is_default` / `mount_path` 等管理配置保存在 `host_storage_pools` 表，硬盘容量等运行时信息不落库 |
+| **VM 落盘路径** | 每个存储池对应一个挂载点下的 `vm_dir` 目录，VM 磁盘直接落盘到该路径；未使用 libvirt storage pool 概念 |
+| **格式化操作** | 通过 `mkfs` + `mount` 将目标分区格式化为 ext4 并挂载到指定目录 |
+| **LVM 支持** | 支持识别 PV/VG/LV 结构，并允许在 LV 节点上启用存储池 |
 
 ### 存储池与虚拟机的关系
 

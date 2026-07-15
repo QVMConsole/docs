@@ -21,8 +21,8 @@ QVMConsole 的模板系统是实现**毫秒级创建虚拟机**的核心基础�
 
 | 字段 | 说明 |
 |------|------|
-| `type` | 模板类型：`linux` / `windows` / `fnos` / `other` |
-| `category` | 二级分类（Linux 发行版或 Windows 版本） |
+| `type` | 模板类型：`linux` / `windows` / `fnos` / `openwrt` / `other` |
+| `category` | 二级分类（Linux 发行版、Windows 版本或 OpenWrt 衍生版） |
 | `boot_type` | 启动类型：`bios` / `uefi` |
 | `boot_verified` | 启动类型是否已确认验证 |
 | `template_user` | 模板中的默认用户名（用于克隆时的用户名重命名） |
@@ -56,11 +56,15 @@ QVMConsole 的模板系统是实现**毫秒级创建虚拟机**的核心基础�
 | **Linux** | Ubuntu（默认）、Debian、CentOS |
 | **Windows** | WindowsServer2022（默认）、WindowsServer2025、Windows11、Windows10、WindowsServer2012R2、其它 |
 | **FnOS** | 无二级分类 |
+| **OpenWrt** | OpenWrt（默认）、iStoreOS |
 | **Other** | 无二级分类 |
 
 模板类型可通过以下方式确定：
 1. 用户在制作模板时显式指定
-2. 从模板名称自动推断（如名称含 `win` 则识别为 Windows）
+2. 从模板名称自动推断：
+   - 名称包含 `win` 标识为 Windows
+   - 名称包含 `openwrt` / `lede` / `istoreos` 标识为 OpenWrt
+   - 名称包含 `fnos` 标识为 FnOS
 
 ---
 
