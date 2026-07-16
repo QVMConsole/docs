@@ -121,7 +121,7 @@ wget -O install.sh https://download.xiaozhuhouses.asia/%E5%BC%80%E6%BA%90%E9%A1%
   <TabItem value="github" label="GitHub Releases">
 
 ```bash
-wget -O install.sh https://github.com/QVMConsole/QVMConsole/blob/main/install.sh
+wget -O install.sh https://raw.githubusercontent.com/QVMConsole/QVMConsole/main/install.sh
 ```
 
 根据架构选择下载对应的程序包：
@@ -201,10 +201,25 @@ bash install.sh
 
 ## 面板管理脚本
 支持 重置认证、修改端口等功能
+
+<Tabs>
+  <TabItem value="default" label="加速CDN">
+
 ```bash
-wget -O qvmc-manage.sh https://github.com/QVMConsole/QVMConsole/blob/main/qvmc-manage.sh
+wget -O qvmc-manage.sh https://download.xiaozhuhouses.asia/%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE/QVMConsole/qvmc-manage.sh
 bash qvmc-manage.sh
 ```
+
+  </TabItem>
+  <TabItem value="github" label="GitHub Releases">
+
+```bash
+wget -O qvmc-manage.sh https://raw.githubusercontent.com/QVMConsole/QVMConsole/main/qvmc-manage.sh
+bash qvmc-manage.sh
+```
+
+  </TabItem>
+</Tabs>
 
 ## 交流与反馈
 
