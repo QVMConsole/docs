@@ -93,10 +93,15 @@ reboot
 
 <AgreementGate hint="阅读协议并查看部署方法">
 
-### 【开源版】下载部署文件
+请选择适合您使用场景的部署渠道。每个渠道仅展示对应的下载和安装方式。
 
-<Tabs>
-  <TabItem value="default" label="加速CDN">
+<Tabs groupId="deploy-channel" defaultValue="open-source">
+  <TabItem value="open-source" label="开源版">
+
+**下载部署文件**
+
+<Tabs groupId="open-source-source" defaultValue="cdn">
+  <TabItem value="cdn" label="加速CDN">
 
 ```bash
 wget -O install.sh https://download.xiaozhuhouses.asia/download/v1/links/dH9nYWU2S4szfAawearVGJgk26i94ODsx4JarLpY3v0
@@ -142,7 +147,24 @@ wget -O install.sh https://raw.githubusercontent.com/QVMConsole/QVMConsole/main/
   </TabItem>
 </Tabs>
 
-### 【赞助版】下载部署文件
+**执行部署**
+
+```bash
+bash install.sh
+```
+
+:::info 注意事项
+部署期间脚本会自动处理依赖和网络等基础服务。请确保在**独立的会话环境**中运行部署命令，避免因中断造成部署失败。
+:::
+
+:::info 离线升级
+离线升级方式与安装相同，重新执行上面三个命令即可，安装脚本会自动识别进入更新模式。
+:::
+
+  </TabItem>
+  <TabItem value="sponsor" label="赞助版">
+
+**下载部署文件**
 
 ```bash
 wget -O install.sh https://download.xiaozhuhouses.asia/download/v1/links/4pptOkAQsdrl2CoWio-FtgZFOmhOOM9yOyB2eGV-qAk
@@ -163,7 +185,7 @@ wget -O install.sh https://download.xiaozhuhouses.asia/download/v1/links/4pptOkA
   </TabItem>
 </Tabs>
 
-### 执行部署
+**执行部署**
 
 ```bash
 bash install.sh
@@ -173,9 +195,58 @@ bash install.sh
 部署期间脚本会自动处理依赖和网络等基础服务。请确保在**独立的会话环境**中运行部署命令，避免因中断造成部署失败。
 :::
 
-### 第三步：访问系统
+:::info 离线升级
+离线升级方式与安装相同，重新执行上面三个命令即可，安装脚本会自动识别进入更新模式。
+:::
 
-部署完毕后，使用以下方式访问：
+  </TabItem>
+  <TabItem value="fnos-beta" label="飞牛 OS（Beta）">
+
+为照顾到飞牛社区用户，为此作者推出飞牛FPK实现一键安装和全生命周期的管理。
+
+[fn-fpk仓库地址](https://github.com/QVMConsole/fn-fpk/)
+
+![](https://images.xiaozhuhouses.asia/i/2026/08/04/h4zp8z.png)
+
+:::warning 注意事项
+飞牛OS虚拟机相关组件比较老，属于Debian12 **本身不在QVMConsole的兼容范围内**，作者通过打补丁的方式去强行兼容核心功能，这种方式可以在不修改QVMConsole源码的基础上单独为飞牛提供兼容，但是可能会相应的**修改飞牛系统的部分设置和植入相关处理服务**，可能会造成**飞牛部分服务（如系统升级）存在异常**和降低系统的**部分场景安全性**。作者已尽最大能力**避免产生更大影响**。**由此产生的相关影响与飞牛官方无关。**
+:::
+
+
+**下载 FPK 安装包**
+
+:::warning Beta 版本
+飞牛 OS 部署渠道当前处于 Beta 测试阶段，可能会存在不稳定因素以及一些功能无法正常使用和报错。若遇到问题时请前往[fn-fpk](https://github.com/QVMConsole/fn-fpk/)仓库提交issues。
+
+目前仅支持x86架构
+:::
+
+
+:::info 
+若您飞牛中已经有虚拟机的可以无缝纳管。您可以选择同时保留飞牛官方的虚拟机应用，互不冲突。
+
+安装面板过程中会自动向系统注入相关兼容补丁和服务，还会新增一个专属网卡用于QVMConsole的虚拟机，与你当前网卡不冲突。
+:::
+
+- **GitHub Releases**：[QVMConsole fn-fpk Releases](https://github.com/QVMConsole/fn-fpk/releases)
+- **国内 CDN 加速**：[下载 FPK 安装包](https://download.xiaozhuhouses.asia/download/v1/links/-26FQKeLtuc-Iwl1bEoXvd7nmDIet_bSCq8tIhTwojc)
+
+**安装教程**
+
+**1. 导入 FPK 安装包**
+
+![](https://images.xiaozhuhouses.asia/i/2026/08/04/gz2n22.png)
+
+**2. 安装面板**
+
+在 `安装与维护` 界面中安装面板即可
+
+  </TabItem>
+</Tabs>
+
+**访问系统**
+
+部署完成后，使用以下方式访问：
 
 - **访问地址**：`http://你的服务器IP:设置的端口`
 - **默认账户**：`admin`
@@ -183,10 +254,6 @@ bash install.sh
 
 :::danger 安全提示
 请务必登录后**第一时间修改默认密码**！默认密码仅用于初始登录，不修改存在严重安全风险。
-:::
-
-:::info 离线升级
-离线升级方式与安装相同，重新执行上面三个命令即可，安装脚本会自动识别进入更新模式。
 :::
 
 </AgreementGate>
