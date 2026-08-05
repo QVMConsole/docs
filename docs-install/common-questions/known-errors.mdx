@@ -43,6 +43,36 @@ sudo apt update && sudo apt upgrade
 判断分组就是看前面的 PCI地址 冒号左边是分组ID冒号右边是该分组下的设备ID。
 :::
 
+## 核显直通出现拒绝操作
+字面意思，因为Linux默认需要一个显卡输出用于显示画面。当待直通的显示控制器仍被宿主机 `fb0` 使用时，QVMConsole 会拒绝绑定到 `vfio-pci`，避免宿主机显示崩溃。
+
+解决方法：使用此脚本[prepare-vfio-primary-gpu.sh](https://download.xiaozhuhouses.asia/download/v1/links/exBRjHs3e0bFioh-Mm8levoCUjcHQcLDkwIYhE-2HdA) 
+
+:::info
+脚本会让启动早期将该显示控制器绑定到 `vfio-pci`。此脚本适用于单独隔离在一个 IOMMU 组内的显示控制器。它不会修改 QVMConsole 数据库，也不会自动重启宿主机。
+:::
+
+在SSH中以root身份或加入sudo输入下面命令。注意看确认PCI地址
+
+
+```bash
+wget https://download.xiaozhuhouses.asia/download/v1/links/exBRjHs3e0bFioh-Mm8levoCUjcHQcLDkwIYhE-2HdA
+bash prepare-vfio-primary-gpu.sh --device 此处替换PCI地址 --check
+```
+![](https://images.xiaozhuhouses.asia/i/2026/08/05/gknapy.jpeg)
+脚本运行后如果没有报错，则开始执行迁移
+```bash
+bash prepare-vfio-primary-gpu.sh --device 此处替换PCI地址 --apply --confirm-host-console-loss
+```
+如果没有报错则执行`reboot`重启设备即可
+
+:::info
+如需恢复可以执行
+```bash
+bash prepare-vfio-primary-gpu.sh --revert
+```
+:::
+
 ## 虚拟机内存使用率一直显示百分百
 这个其实是正常情况，当QVMC无法获取到虚拟机内部使用内存时，会降级到获取虚拟机占用真实物理机的内存大小，当系统处于刚启动或没有安装QEMU驱动的时候通常无法回收空闲内存那么虚拟机就会使用掉设置的全部物理机内存
 
