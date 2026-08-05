@@ -43,7 +43,7 @@ sudo apt update && sudo apt upgrade
 判断分组就是看前面的 PCI地址 冒号左边是分组ID冒号右边是该分组下的设备ID。
 :::
 
-## 核显直通出现拒绝操作
+## 显卡直通出现拒绝操作
 字面意思，因为Linux默认需要一个显卡输出用于显示画面。当待直通的显示控制器仍被宿主机 `fb0` 使用时，QVMConsole 会拒绝绑定到 `vfio-pci`，避免宿主机显示崩溃。
 
 解决方法：使用此脚本[prepare-vfio-primary-gpu.sh](https://download.xiaozhuhouses.asia/download/v1/links/exBRjHs3e0bFioh-Mm8levoCUjcHQcLDkwIYhE-2HdA) 
