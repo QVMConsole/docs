@@ -76,7 +76,12 @@ sequenceDiagram
 ```
 
 :::info[初始化说明]
-存储池初始化是一次性操作，完成后用户即可使用所有文件管理功能。初始化过程会自动为用户创建独立的存储目录，确保数据隔离。
+存储池初始化是一次性操作，完成后用户即可使用所有文件管理功能。实现细节：
+
+- 用户存储统一挂载在 `/var/lib/kvm-user-storage`（首次使用时自动创建带 `project` 配额特性的 ext4 镜像并 loop 挂载）
+- 为用户创建 `{用户名}/iso`、`{用户名}/share`、`{用户名}/disk` 三个分类目录并授权
+- 基于 **ext4 project quota** 实施配额：project ID 使用用户的系统 UID，写入 `/etc/projects` 与 `/etc/projid` 映射，并通过 `chattr -p` 给目录打上 project 标记
+- 兼容处理：目录已存在但未登记 project 映射的用户，会在访问时自动补登记并追溯设置标记
 :::
 
 ## 配额监控
@@ -180,6 +185,12 @@ ISO 镜像通过 9p VirtFS 协议挂载到虚拟机中，虚拟机将其识别�
 | **VHD** | `.vhd` | Hyper-V | 虚拟硬盘格式（旧版） |
 | **VHDX** | `.vhdx` | Hyper-V | 虚拟硬盘格式（新版，支持更大容量） |
 | **IMG** | `.img` | 通用 | 通用磁盘映像格式 |
+| **VFD** | `.vfd` | 软盘镜像 | 软驱镜像文件 |
+| **OVF / OVA / MF** | `.ovf` / `.ova` / `.mf` | 跨平台 | 虚拟机包（用于 [导入虚拟机包](/docs/tech/virtual-machine/import-export)） |
+
+:::info 磁盘类别不支持挂载
+磁盘类别文件仅用于创建/导入虚拟机与下载管理，不支持以 9p 方式挂载到虚拟机。
+:::
 
 ### 磁盘文件列表字段
 
@@ -209,10 +220,17 @@ ISO 镜像通过 9p VirtFS 协议挂载到虚拟机中，虚拟机将其识别�
 
 ### 挂载命令说明
 
-挂载命令是 9p VirtFS 协议在虚拟机内部执行的 Linux 挂载命令，格式如下：
+挂载标签由系统自动生成，格式为 `user_<用户名>_<类别>`（类别为 `iso` 或 `share`）。挂载帮助对话框会生成三行命令（一键复制，HTTP 环境自动降级复制方案）：
 
 ```bash
-mount -t 9p -o trans=virtio,version=9p2000.L <tag> <mountpoint>
+# 创建挂载点
+mkdir -p /mnt/<tag>
+
+# 挂载共享目录（只读模式追加 ,ro）
+mount -t 9p -o trans=virtio,version=9p2000.L <tag> /mnt/<tag>
+
+# 写入 fstab 实现开机自动挂载
+echo '<tag> /mnt/<tag> 9p trans=virtio,version=9p2000.L,nofail 0 0' >> /etc/fstab
 ```
 
 | 参数 | 说明 |
@@ -220,11 +238,10 @@ mount -t 9p -o trans=virtio,version=9p2000.L <tag> <mountpoint>
 | `-t 9p` | 指定文件系统类型为 9p |
 | `trans=virtio` | 使用 VirtIO 传输层 |
 | `version=9p2000.L` | 使用 9p2000.L 协议版本 |
-| `<tag>` | 挂载标签，由系统自动生成 |
-| `<mountpoint>` | 虚拟机内的挂载点目录 |
+| `<tag>` | 挂载标签（`user_<用户名>_<类别>`） |
 
 :::info[一键复制]
-挂载管理界面提供了一键复制功能，用户可以直接复制挂载命令并在虚拟机终端中执行，无需手动输入复杂的挂载参数。
+挂载管理界面提供了一键复制功能，用户可以直接复制挂载命令并在虚拟机终端中执行，无需手动输入复杂的挂载参数。挂载成功后会自动弹出挂载帮助对话框。
 :::
 
 ## 挂载对话框
@@ -288,10 +305,43 @@ graph TB
 
 | 技术 | 说明 |
 |------|------|
-| **存储池** | 基于宿主机文件系统，每个用户拥有独立的存储目录 |
-| **文件上传** | 通过 HTTP multipart 上传，支持进度回调 |
+| **存储池** | 基于宿主机文件系统 + ext4 project quota，每个用户拥有独立的存储目录 |
+| **文件上传** | 分片上传（见下文） |
 | **挂载协议** | 使用 9p VirtFS 协议，通过 libvirt 文件系统设备实现 |
 | **访问控制** | 只读模式下虚拟机只能读取，读写模式下可读写 |
+
+### 分片上传机制
+
+所有上传均通过分片上传引擎完成，支持**秒传**与**断点续传**：
+
+```mermaid
+sequenceDiagram
+    participant F as 前端上传器
+    participant S as 后端存储
+
+    F->>F: 计算抽样哈希（2MB窗口/1GB步长/最少3样本）
+    F->>S: POST /self/storage/upload/init
+    alt 命中秒传
+        S-->>F: 已完成会话/已存在文件 → 直接完成
+    else 存在未完成会话
+        S-->>F: 返回已接收分片列表 → 断点续传
+    else 全新上传
+        S-->>F: 创建会话并预分配文件
+    end
+
+    loop 分片上传（1MB/片，并发 3，失败重试）
+        F->>S: POST /self/storage/upload/chunk
+    end
+
+    F->>S: POST /self/storage/upload/complete
+    S->>S: 分片到齐校验（缺片返回 missing 列表补传）
+    S->>S: 抽样哈希校验 → 落盘
+```
+
+- 上传进度分为两阶段：抽样哈希（0-8%）与分片传输（8-100%）
+- 上传会话 24 小时过期；页面「未完成上传」卡片可随时**继续**或**取消**未完成的会话
+- 上传前会预检配额与只读状态，超限时提示剩余空间
+- `/tmp` 空间不足时会提示大文件落盘模式（上传可能降速）
 
 ### 9p VirtFS 协议详解
 
@@ -318,8 +368,14 @@ graph TB
 | 接口 | 方法 | 说明 |
 |------|------|------|
 | `/self/storage/files/{category}` | GET | 获取文件列表（category: iso/share/disk） |
-| `/self/storage/upload/{category}` | POST | 上传文件到指定类别 |
-| `/self/storage/file/{category}/{filename}` | DELETE | 删除指定文件 |
+| `/self/storage/upload/init` | POST | 分片上传初始化（秒传/续传判定） |
+| `/self/storage/upload/chunk` | POST | 上传单个分片 |
+| `/self/storage/upload/complete` | POST | 完成校验（缺片补传 + 抽样哈希） |
+| `/self/storage/upload/status` | GET | 查询上传会话进度 |
+| `/self/storage/upload/pending` | GET | 获取未完成上传会话 |
+| `/self/storage/upload` | DELETE | 取消上传会话 |
+| `/self/storage/file/{category}/{filename}` | DELETE | 删除指定文件（高风险二次验证） |
+| `/self/storage/download/{category}/{filename}` | GET | 下载文件 |
 | `/self/storage/isos` | GET | 获取用户 ISO 列表（用于虚拟机创建） |
 
 ### 挂载管理

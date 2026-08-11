@@ -251,38 +251,68 @@ graph TD
 
 ### 任务类型
 
-系统支持 20+ 种异步任务类型，涵盖虚拟机管理的各个方面：
+系统共支持 50 种异步任务类型，涵盖虚拟机管理的各个方面：
 
 ```mermaid
 mindmap
   root((异步任务类型))
     虚拟机生命周期
-      创建（create）
-      删除（delete）
-      克隆（clone）
-      批量操作（batch）
-    系统安装
-      重装系统（reinstall）
-      预配置（prepare）
+      创建 create
+      删除 delete
+      重装系统 reinstall
+      转独立 make_vm_independent
+    克隆
+      链式克隆 clone
+      原生链式克隆 linked_clone
+      批量克隆 batch
     模板管理
-      导出模板（template_export）
-      导入模板（template_import）
-      删除模板（delete_template）
-      轻量级创建（lightweight_vm_provision）
+      制作模板 prepare
+      导出模板 template_export
+      导入模板 template_import
+      Linux模板预处理 template_linux_prepare
+      删除模板 delete_template
     快照管理
-      快照操作（snapshot）
+      快照操作 snapshot
     迁移操作
-      虚拟机迁移（vm_migrate）
-      磁盘迁移（vm_disk_migrate）
+      整机迁移 vm_migrate
+      本机磁盘迁移 vm_disk_migrate
+    导入导出
+      导出 export
+      导入 import
+      OVF/OVA导入 import_appliance
+      磁盘导入建机 import_disk
+      磁盘导入挂载 import_disk_attach
+      磁盘转移 disk_transfer
+    磁盘操作
+      磁盘扩容 vm_disk_resize
+      磁盘配置 vm_disk_provision
+      来宾挂载重试 vm_disk_guest_mount
     存储操作
-      导出（export）
-      导入（import）
-      存储格式化（storage_format）
-    网络操作
-      OVS 修复（ovs_repair）
-      网络抓包（network_capture）
-    定时任务
-      定时任务动作（vm_schedule_action）
+      格式化挂载 storage_format
+      创建分区 storage_create_partition
+      删除分区 storage_delete_partitions
+      创建LVM卷 storage_create_lvm_volume
+      删除LVM卷 storage_delete_lvm_volume
+    网络与防火墙
+      KVM防火墙应用/禁用/回滚 apply_firewall 等
+      GeoIP更新 update_firewall_geoip
+      宿主机防火墙启停 enable/disable_host_firewall
+      OVS修复 ovs_repair
+      端口安全 port_security
+      公网IP应用 public_ip_apply
+      网络抓包 network_capture
+    控制台与安全
+      救援系统 rescue
+      重置来宾密码 reset_vm_password
+      定时任务动作 vm_schedule_action
+      泄露密码扫描/通知 password_breach_scan/notify
+      维护模式启停 enter/exit_maintenance_mode
+    用户与轻量云
+      删除用户 deleteuser
+      封禁用户 disable_user
+      运行时长配额关机 runtime_quota_shutdown
+      轻量云配额关机 lightweight_runtime_quota_shutdown
+      轻量云开通 lightweight_vm_provision
 ```
 
 ### 任务状态

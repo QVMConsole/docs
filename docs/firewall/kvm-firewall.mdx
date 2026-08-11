@@ -8,6 +8,10 @@ description: 基于 nftables 的 KVM 虚拟机 IPv4 转发流量防火墙
 
 KVM 网络防火墙是 QVMConsole 的全局网络策略引擎，专注于管控 KVM 虚拟机的 IPv4 转发流量。它基于独立的 nftables 表 `kvm_console_fw` 实现，与宿主机防火墙和 Docker 网络完全隔离——不影响宿主机自身访问，也不控制 Docker 容器网络。
 
+:::info 作用域
+防火墙规则挂在 nftables 的 `forward` 钩子（优先级 -50），作用接口为**主 OVS 网桥与所有 VPC 交换机网关端口**；仅过滤经过这些接口转发的虚拟机流量。防火墙对端口转发流量的入站区域限制，可通过端口转发规则的豁免开关单独放行（见 [端口转发](/docs/tech/network/port-forward)）。
+:::
+
 ## 整体架构
 
 ```mermaid

@@ -196,11 +196,11 @@ flowchart TD
 
 ### 配额信息
 
-返回的配额信息包括：
+返回的配额信息包括（`scope` 按用户云类型区分，弹性云为 `elastic`、轻量云为 `lightweight`）：
 
 ```json
 {
-  "scope": "vm",
+  "scope": "elastic",
   "used_snapshots": 3,
   "max_snapshots": 10,
   "remaining_snapshots": 7

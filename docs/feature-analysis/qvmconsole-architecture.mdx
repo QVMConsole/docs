@@ -16,9 +16,9 @@ QVMConsole 采用经典的三层架构设计，将系统分为表现层、业务
 graph TB
     subgraph 表现层["表现层 (Frontend)"]
         Browser[浏览器]
-        Vue[Vue.js 3 + Vite]
-        Pinia[Pinia 状态管理]
-        ElementPlus[Element Plus UI]
+        React[React 19 + Vite]
+        Zustand[Zustand 状态管理]
+        SemiDesign[Semi Design UI]
         Axios[Axios HTTP 客户端]
     end
 
@@ -44,10 +44,10 @@ graph TB
         OVS[Open vSwitch]
     end
 
-    Browser --> Vue
-    Vue --> Pinia
-    Vue --> ElementPlus
-    Vue --> Axios
+    Browser --> React
+    React --> Zustand
+    React --> SemiDesign
+    React --> Axios
     Axios -->|HTTP API| Gin
     Gin --> Middleware
     Middleware --> Router
@@ -69,86 +69,99 @@ graph TB
 
 | 组件 | 技术 | 说明 |
 |------|------|------|
-| Web 框架 | Gin | 高性能 HTTP 框架，支持中间件链 |
-| 虚拟化 API | go-libvirt | 通过 UNIX Socket 与 libvirt 守护进程通信，高性能 RPC 调用 |
-| 数据库 | SQLite + GORM | 轻量级嵌入式数据库，自动迁移与兼容性修复 |
-| 任务队列 | 自研 | 基于 goroutine 的异步任务系统，支持进度回调和 SSE 推送 |
-| 网络虚拟化 | Open vSwitch | 支持 VLAN 隔离、流表管理和 TC 限速 |
+| 语言与运行时 | Go 1.26 | 编译型语言，单二进制部署 |
+| Web 框架 | Gin v1.12 | 高性能 HTTP 框架，支持中间件链 |
+| 虚拟化 API | go-libvirt（digitalocean/go-libvirt） | 通过 UNIX Socket `/var/run/libvirt/libvirt-sock` 与 libvirt 守护进程通信的 RPC 客户端 |
+| 数据库 | SQLite + GORM v1.31 | 轻量级嵌入式数据库，WAL 模式、自动迁移与兼容性修复 |
+| 任务队列 | 自研 | 基于 goroutine + 有界 channel 的异步任务系统，支持进度回调和 SSE 推送 |
+| WebSocket | gorilla/websocket v1.5 | VNC WebSocket 代理等场景 |
+| 认证 | JWT（HS256）+ TOTP | 会话指纹、会话指纹绑定与多类型令牌 |
+| 日志 | slog + lumberjack v2.2 | 分类日志文件、按大小与日期轮转 |
+| 网络虚拟化 | Open vSwitch | VLAN 隔离、OpenFlow 流表、端口安全与 TC/QoS 限速 |
 
 ### 目录结构
 
 ```
 server/
-├── main.go              # 程序入口，启动流程编排、任务处理器注册
-├── config/              # 配置管理（环境变量 > 数据库 > 默认值）
+├── main.go                  # 程序入口：启动流程编排、任务处理器注册
+├── compatibility_command.go # system-compatibility-check 子命令（系统兼容性 CLI 检查）
+├── config/                  # 配置管理（环境变量 > 数据库 > 默认值）
 │   └── config.go
-├── router/              # 路由定义与中间件注册
+├── router/                  # 路由定义、全局中间件注册、前端静态文件服务
 │   └── router.go
-├── handler/             # HTTP 请求处理层（按域划分）
-│   ├── auth.go / user_self.go / api_key.go   # 认证、用户自助、API Key
-│   ├── vm.go / vm_sse.go / vm_create.go / vm_schedule.go / vm_rescue.go / vm_independent.go / vm_passthrough.go / vm_lock.go / vm_monitor.go / vm_export_import.go / linked_clone.go
-│   ├── network.go / network_bridge.go / network_diagnostics.go / vpc.go
-│   ├── firewall.go / public_ip.go / storage_pool.go
-│   ├── template.go / template_transfer.go
-│   ├── snapshot.go / task.go / scheduler.go
-│   ├── diagnostics.go / vnc.go / spice.go / share.go
-│   └── ...
-├── middleware/          # 中间件链
-│   ├── auth.go / fingerprint.go               # 认证、JWT/API Key
-│   ├── cors.go                                # CORS 跨域
+├── handler/                 # HTTP 请求处理层（按域划分）
+│   ├── auth.go / api_key.go / password_breach.go / security_helper.go
+│   ├── user.go / user_self.go / settings.go / version.go / host.go
+│   ├── vm.go / vm_create.go / vm_sse.go / vm_schedule.go / vm_rescue.go
+│   ├── vm_independent.go / vm_passthrough.go / vm_lock.go
+│   ├── vm_appliance.go / vm_export_import.go / linked_clone.go
+│   ├── clone.go / snapshot.go / disk.go / vnc.go / spice.go / share.go
+│   ├── network.go / network_bridge.go / network_diagnostics.go
+│   ├── vpc.go / port_security.go / ovs_diagnostics.go / public_ip.go
+│   ├── firewall.go / storage_pool.go / template.go / template_transfer.go
+│   ├── upload_chunk.go / task.go / scheduler.go / diagnostics.go
+│   ├── node_migration.go / types.go / helpers.go
+├── middleware/              # 中间件链
+│   ├── auth.go              # JWT / API Key 认证与角色中间件
+│   ├── fingerprint.go       # 会话指纹（IP 前缀 + User-Agent 哈希）
+│   ├── cors.go              # CORS 跨域
 │   ├── request_logger.go / request_filter.go / request_guard.go
-│   ├── ratelimit.go / security_headers.go     # 限流、安全响应头
-│   └── security_helper.go
-├── model/               # 数据模型（GORM 实体）
-│   ├── db.go            # 数据库初始化、自动迁移、版本兼容
-│   ├── user.go / user_api_key.go / user_storage.go / user_traffic_daily.go
+│   ├── ratelimit.go / security_headers.go
+├── model/                   # 数据模型（GORM 实体，28 张表 + 内存任务模型）
+│   ├── db.go                # 数据库初始化、自动迁移、版本兼容修复
+│   ├── user.go / user_api_key.go / user_traffic_daily.go
 │   ├── vm_cache.go / vm_lock.go / vm_schedule.go / vm_stats_record.go / vm_credential.go
 │   ├── storage_pool.go / public_ip.go / vpc.go / network_bridge.go
-│   ├── task.go / upload_session.go / scheduler_event.go
+│   ├── task.go              # 任务模型与全部任务类型常量（纯内存，不落库）
+│   ├── upload_session.go / scheduler_event.go / host_node.go / host_stats_record.go
 │   ├── auth_action_token.go / security_challenge.go / system_setting.go
-│   ├── host_node.go / host_stats_record.go / lightweight_cloud.go / lightweight_vm_registration.go
-│   └── port_forward_*.go
-├── service/             # 业务逻辑层（按域分包）
-│   ├── vm/                       # 虚拟机（创建/生命周期/缓存/详情/独立化/密码/监控/迁移）
-│   │   ├── create.go / lifecycle.go / runtime.go / list.go / detail.go
-│   │   ├── memory/ migration/ vmimport/ vm_xml/  # 内存、迁移、导入、XML 装配
+│   ├── lightweight_cloud.go / lightweight_vm_registration.go
+│   └── port_forward_ip.go
+├── service/                 # 业务逻辑层（按域分包）
+│   ├── vm/                  # 虚拟机（创建/生命周期/缓存/详情/统计/独立化/密码重置/快照联动）
+│   │   ├── create.go / lifecycle.go / runtime.go / list.go / detail.go / stats.go
 │   │   ├── cpu.go / cpu_affinity.go / cpu_topology.go / cpu_limit.go
-│   │   ├── passthrough.go / password_reset.go / monitor.go / lock.go
-│   │   ├── independent.go / export.go / config.go / config_metadata.go
-│   │   └── deps.go              # 子包 Deps 容器
-│   ├── clone/                    # 克隆、批量克隆、重装、删除、初始化
-│   ├── template/                 # 模板元数据、树形版本、上传/下载/导入导出
-│   ├── snapshot/                 # 内部/外部快照、NVRAM、overlay、锁、配额
-│   ├── network/                  # VPC、端口转发、ACL、桥接、静态 IP、诊断
-│   │   ├── vpc/ bridge/ probe/ diagnostics/
-│   ├── firewall/                 # 宿主机防火墙 + KVM 防火墙
-│   ├── bandwidth/                # 全局/VM/OVS 带宽限速
-│   ├── ovs/                      # Open vSwitch 集成
-│   ├── public_ip/                # 公网 IP 1:1 NAT/路由/桥接
-│   ├── storage/                  # 存储池、磁盘、IOPS
-│   ├── share/                    # 9p 共享目录
-│   ├── spice/                    # SPICE 控制台
-│   ├── vnc/                      # VNC 控制台
-│   ├── scheduler/                # 调度事件中心
-│   ├── rescue/                   # 救援系统
-│   ├── lightweight/              # 轻量云管理
-│   ├── user/                     # 用户、配额、SSH
-│   ├── security/                 # JWT 密钥、令牌、TOTP、密码强度
-│   ├── guest_agent/              # QEMU Guest Agent 通信
-│   ├── ip_resolver/              # VM IP 解析
-│   ├── libvirt_rpc/              # go-libvirt RPC 封装
-│   ├── arch/                     # 架构探测（x86_64 / aarch64）
-│   ├── upload/                   # 分片上传
-│   ├── traffic/                  # 流量配额
-│   └── *_register.go / *_wire.go # 根包 ↔ 子包依赖注入适配
-├── taskqueue/           # 任务队列内核
-│   └── queue.go         # 任务提交/分发/执行/SSE/清理
-└── utils/               # 工具函数（命令执行、文件系统、进程）
+│   │   ├── memory/ # 动态内存（balloon / virtio-mem）配置与调度器
+│   │   ├── migration/ # 跨节点整机迁移（预检/评估/执行/接管/锁）
+│   │   ├── vmimport/ # 导入虚拟机组装
+│   │   └── disk_migration.go 等 # 本机磁盘迁移、磁盘用量缓存等
+│   ├── vm_xml/              # 域 XML 装配与规范化（显示/引导/Guest Agent/SMBIOS 等）
+│   ├── clone/               # 克隆、批量克隆、重装、删除、Linux/Windows/OpenWrt/FnOS 初始化
+│   ├── template/            # 模板元数据、树形结构、制作/上传/导入导出、Linux 依赖预处理
+│   ├── snapshot/            # 内部/外部快照、NVRAM、overlay、锁、配额
+│   ├── network/             # 端口转发、静态 IP、端口转发持久化与配额
+│   │   ├── vpc/ bridge/ portsecurity/ diagnostics/
+│   ├── firewall/            # 宿主机 UFW 防火墙 + KVM nftables 防火墙
+│   ├── bandwidth/           # 全局/VM/OVS 带宽限速（TC 与 OVS QoS）
+│   ├── ovs/                 # Open vSwitch 集成（网络/DHCP/静态主机/诊断）
+│   ├── public_ip/           # 公网 IP 1:1 NAT/经典网络-路由/经典网络-桥接
+│   ├── storage/             # 存储池（pool）、磁盘（disk）、配额（quota）与 IOPS
+│   ├── share/               # 9p 共享目录
+│   ├── spice/ vnc/          # SPICE / VNC 控制台
+│   ├── scheduler/           # 调度事件中心
+│   ├── rescue/              # 救援系统
+│   ├── lightweight/         # 轻量云开通、配额与流量
+│   ├── user/                # 用户、配额、SSH、存储
+│   ├── security/            # JWT 密钥、令牌、TOTP、密码强度、SMTP、登录限流、密码泄露
+│   ├── guest_agent/         # QEMU Guest Agent 通信
+│   ├── guest_automation/    # 来宾内磁盘自动化
+│   ├── ip_resolver/         # VM IP 解析
+│   ├── libvirt_rpc/         # go-libvirt RPC 封装（单例连接与自动重连）
+│   ├── arch/                # 架构探测（x86_64 / aarch64）与机型注册
+│   ├── upload/              # 分片上传引擎（秒传/断点续传/抽样哈希）
+│   ├── traffic/             # 流量配额与月度重置
+│   ├── appliance/           # OVF/OVA 虚拟机包解析与导出
+│   ├── compatibility/ diagnostics/ host/
+│   └── *_register.go / *_wire.go # 根包 ↔ 子包依赖注入适配（init 期装配）
+├── taskqueue/               # 任务队列内核
+│   └── queue.go             # 任务提交/分发/执行/SSE 广播/自动清理
+├── logger/                  # 分类日志（app/request/cmd/libvirt）与轮转
+└── utils/                   # 工具函数（命令执行、文件系统、进程）
 ```
 
 ### 启动流程
 
-后端启动流程严格按照依赖顺序执行：
+后端启动流程严格按照依赖顺序执行（`server/main.go`）：
 
 ```mermaid
 sequenceDiagram
@@ -160,24 +173,33 @@ sequenceDiagram
     participant Cache as VM 缓存
     participant Task as 任务队列
     participant Sched as 后台调度器
+    participant Net as 网络恢复
     participant Router as 路由
     participant HTTP as HTTP 服务
 
-    Main->>Cfg: Init() 加载默认配置
-    Main->>Log: InitWithConsoleConfig() 初始化日志
-    Main->>DB: InitDB() 初始化数据库（GORM + SQLite）
-    Main->>Cfg: LoadFromDB(savedSettings) 合并持久化配置
-    Main->>RPC: InitLibvirtRPC() 建立 go-libvirt 连接
-    Main->>Cache: BootstrapVMCacheFromHost() 同步缓存
-    Main->>Main: ValidateSecurity() 安全检查
-    Main->>Task: registerTaskHandlers() 注册处理器
-    Main->>Task: Start(workers=3) 启动工作线程
-    Main->>Sched: StartStatsCollector / 气球调度器 / 调度事件清理 / 端口探测 / 定时任务 / JWT 密钥轮转 / 上传会话清理
-    Main->>Sched: SyncSSHDenyConfig / EnsureAllActiveUsersDefaultSecurityGroup
-    Main->>Sched: EnsureSystemBaseNetwork / 桥接恢复 / 端口转发恢复 / VPC 恢复 / 公网 IP 规则恢复
-    Main->>Router: Setup() 设置路由
+    Main->>Main: 子命令分发（system-compatibility-check / host-zram-apply）
+    Main->>Main: ensureLargeTempDir() 保障大文件上传临时空间
+    Main->>Cfg: config.Init()（读取 .env → 环境变量 → 默认值）
+    Main->>Log: InitWithConsoleConfig() 初始化分类日志
+    Main->>DB: model.InitDB()（SQLite WAL + GORM 自动迁移）
+    Main->>Cfg: LoadFromDB(savedSettings) 合并持久化配置（环境变量未设置时生效）
+    Main->>RPC: InitLibvirtRPC() 建立 go-libvirt 连接（失败直接终止启动）
+    Main->>Cache: BootstrapVMCacheFromHost() 同步宿主机 VM 缓存
+    Main->>Main: ValidateSecurity() 拒绝默认 JWT 密钥在生产模式启动
+    Main->>Main: initCloneDeps() 注入克隆子包依赖
+    Main->>Task: registerTaskHandlers() 注册全部任务处理器
+    Main->>Task: taskqueue.Start(3) 启动 3 个工作协程
+    Main->>Sched: 资源采集器 / 动态内存调度器 / 调度事件清理 / VM 定时任务
+    Main->>Sched: JWT 密钥轮转 / 上传会话清理 / 泄露密码定时扫描
+    Main->>Net: SyncSSHDenyConfig → 默认安全组 → 系统基础网络 → 网桥恢复
+    Main->>Net: 端口转发恢复 → VPC 交换机恢复 → 公网 IP 规则恢复 → 端口安全协调器
+    Main->>Router: router.Setup()（注册中间件、路由与前端静态文件服务）
     Main->>HTTP: r.Run(":port") 启动 HTTP 服务
 ```
+
+:::info 启动子命令
+可执行文件还支持两个子命令：`system-compatibility-check`（独立执行系统兼容性检查，输出报告并以状态码区分结果）和 `host-zram-apply`（应用持久化的 zRAM 配置后直接退出，供 systemd 在面板主服务之前调用）。
+:::
 
 ### 分层架构设计
 
@@ -221,7 +243,7 @@ graph TB
 
 ### 中间件链
 
-中间件按顺序执行，形成处理管道：
+全局中间件按顺序执行，形成处理管道；路由组内再叠加认证与授权中间件：
 
 ```mermaid
 flowchart TD
@@ -230,12 +252,12 @@ flowchart TD
     Recover --> CORS[CORS 中间件<br/>处理跨域请求]
     CORS --> SecHdr[安全响应头中间件<br/>注入安全头]
     SecHdr --> ReqFilter[请求过滤中间件<br/>拦截异常请求]
-    ReqFilter --> ReqGuard[请求守卫中间件<br/>补充防护]
-    ReqGuard --> RateLimit[限流中间件<br/>API 请求频率控制]
-    RateLimit --> Auth[认证中间件<br/>JWT/API Key 验证]
+    ReqFilter --> ReqGuard[请求守卫中间件<br/>请求体大小与 Content-Type 校验]
+    ReqGuard --> RateLimit[限流中间件<br/>按 IP 滑动窗口限流]
+    RateLimit --> Auth[认证中间件<br/>JWT / API Key 验证]
     Auth --> PwdChange[强制改密中间件]
     PwdChange --> Admin[管理员中间件<br/>权限检查]
-    Admin --> Elastic[ElasticCloud 中间件<br/>轻量云用户限制]
+    Admin --> Elastic[ElasticCloud 中间件<br/>轻量云用户功能限制]
     Elastic --> VMAccess[VM 访问中间件<br/>虚拟机归属验证]
     VMAccess --> Handler[处理器]
     Handler --> Response[HTTP 响应]
@@ -243,18 +265,19 @@ flowchart TD
 
 | 中间件 | 功能 | 应用范围 |
 |--------|------|----------|
-| `RequestLoggerMiddleware` | 记录请求路径、方法、耗时等 | 全局 |
+| `RequestLoggerMiddleware` | 记录请求路径、方法、状态码、耗时、来源 IP 与用户，按状态码分级输出 | 全局 |
 | `SafeRecoveryMiddleware` | panic 兜底，避免单个请求导致进程退出 | 全局 |
-| `CORSMiddleware` | 处理跨域请求，设置 CORS 头 | 全局 |
-| `SecurityHeadersMiddleware` | 注入安全相关响应头 | 全局 |
-| `RequestFilterMiddleware` | 过滤异常/恶意请求 | 全局 |
-| `RequestGuardMiddleware` | 通用请求守卫（兜底防护） | 全局 |
-| `RateLimitMiddleware` | API 请求频率控制，防止滥用 | 全局 |
-| `AuthMiddleware` | JWT 令牌/API Key 验证，注入用户身份 | 需要认证的接口 |
-| `ForcePasswordChangeMiddleware` | 强制要求修改初始/重置密码后才能继续 | 需要认证的接口 |
+| `CORSMiddleware` | 处理跨域请求；开发模式或未配置白名单时允许所有来源 | 全局 |
+| `SecurityHeadersMiddleware` | 注入 nosniff、DENY、Referrer-Policy、Permissions-Policy 等安全头；API 响应禁用缓存；页面响应附加 CSP | 全局 |
+| `RequestFilterMiddleware` | 过滤危险路径模式、扫描器探测路径、超长参数与请求体中的危险内容 | 全局（可配置开关） |
+| `RequestGuardMiddleware` | 请求体大小限制（默认 2MB，大文件上传路径豁免）与 Content-Type 强制校验 | 全局 |
+| `RateLimitMiddleware` | 按 IP 滑动窗口限流（公开接口默认 20 次/分钟，认证后接口默认不限），超限返回 429 | 全局 |
+| `AuthMiddleware` | JWT 令牌 / API Key 双通道验证，注入用户身份，校验会话指纹与用户状态 | 需要认证的接口 |
+| `JWTTokenTypeMiddleware` | 仅接受指定类型的 JWT（如仅 `access`/`bootstrap`），用于账户安全流程 | 安全初始化等接口 |
+| `ForcePasswordChangeMiddleware` | 强制要求修改初始/重置密码后才能继续访问 | 需要认证的接口 |
 | `AdminMiddleware` | 管理员权限验证 | 管理员接口 |
-| `ElasticCloudOnlyMiddleware` | 轻量云用户功能限制 | 轻量云专属功能 |
-| `VMAccessMiddleware` | 虚拟机归属权限验证 | VM 操作接口 |
+| `ElasticCloudOnlyMiddleware` | 轻量云用户功能限制 | 弹性云专属功能 |
+| `VMAccessMiddleware` | 虚拟机归属权限验证（基于 VM 访问目录文件） | VM 操作接口 |
 
 ### 依赖注入机制
 
@@ -301,7 +324,7 @@ classDiagram
 | 特点 | 说明 |
 |------|------|
 | **Deps 容器** | 每个子包（`vm`、`clone`、`template`、`snapshot` 等）定义一个 `Deps` 结构体，承载其所需的外部依赖（多为函数指针） |
-| **手工注入** | `main.go` 启动时调用 `InitDeps(&Deps{...})` 一次性注入到子包的包级变量 `D` |
+| **手工注入** | `main.go` 启动时调用 `InitDeps(&Deps{...})` 一次性注入到子包的包级变量 `D`；另有 `init()` 期注册的 `hooks.go` 钩子（VPC、迁移、快照、内存）完成横切装配 |
 | **循环 import 规避** | 子包通过 `D.XXX()` 反向调用根包函数，避免根包反向 import 子包造成的循环 |
 | **Hook 接口** | 横切关注点（如网桥名、iptables 规则、状态查询）通过 Hook 函数隔离，运行时由适配层注册 |
 
@@ -336,44 +359,52 @@ graph LR
             Auth["/auth"]
             Public["/public"]
         end
-        
+
         subgraph 认证接口["需要认证"]
             VM["/vm"]
+            Self["/self"]
             Template["/template"]
             Network["/network"]
             VPC["/vpc"]
             Firewall["/firewall"]
+            OVS["/ovs"]
             Storage["/storage-pool"]
             User["/user"]
             Task["/task"]
             Host["/host"]
             Scheduler["/scheduler"]
+            Nodes["/nodes"]
+            Migration["/migration"]
         end
 
-        subgraph 管理员接口["需要管理员权限"]
+        subgraph 管理员接口["仅管理员"]
             Settings["/settings"]
+            SecurityScan["/security/password-breach"]
         end
     end
 
-    Auth --> Login["/login"]
-    Auth --> Register["/invite"]
-    Auth --> Password["/password"]
-    Auth --> TwoFA["/2fa"]
-    
-    VM --> VMList["/list"]
-    VM --> VMCreate["/create"]
-    VM --> VMClone["/clone"]
-    VM --> VMSnapshot["/:name/snapshot"]
-    VM --> VMMigrate["/migrate"]
-    
-    Network --> PortForward["/port-forward"]
-    Network --> StaticIP["/static-ip"]
-    Network --> PublicIP["/public-ips"]
-    Network --> Diagnostics["/diagnostics"]
-    
-    VPC --> Switch["/switches"]
+    Auth --> Login["/login, /login/verify"]
+    Auth --> Invite["/invite, /invite/complete"]
+    Auth --> Password["/password/forgot, /password/reset"]
+    Auth --> SecureSetup["/email/*, /2fa/*, /skip-bootstrap"]
+    Auth --> HighRisk["/info, /api-key, /password, /username, /high-risk/verify"]
+
+    VM --> VMList["/list, /sse"]
+    VM --> VMCreate["/create, /clone, /linked-clone, /batch-clone"]
+    VM --> VMOp["/:name/operate, /:name/snapshot, /:name/vnc/*, /:name/spice/*"]
+    VM --> VMMigrate["/:name/migration/preview, /:name/migrate, /:name/disk/:dev/migrate"]
+
+    Network --> PortForward["/port-forward/*"]
+    Network --> StaticIP["/static-ip/*"]
+    Network --> PublicIP["/public-ips/*"]
+    Network --> Bridges["/bridges, /host/interfaces, /interfaces/:name/config, /captures/*"]
+
+    VPC --> Switch["/switches, /quota"]
     VPC --> SecurityGroup["/security-groups"]
+    VPC --> ACL["/acl/preview, /acl/apply"]
 ```
+
+接口清单的完整说明请参阅 [API 接口与安全调用](/docs/tech/user-manage/api-console-auth)；前端「接口文档」页会在构建时从 `router.go` 与 handler 源码自动生成全量接口列表。
 
 ## 前端架构
 
@@ -381,144 +412,193 @@ graph LR
 
 | 组件 | 技术 | 说明 |
 |------|------|------|
-| 框架 | Vue.js 3 | 渐进式 JavaScript 框架 |
-| 构建工具 | Vite | 下一代前端构建工具，支持热更新 |
-| 状态管理 | Pinia | Vue 3 官方状态管理 |
-| UI 组件库 | Element Plus | Vue 3 组件库 |
+| 框架 | React 19 + TypeScript 6 | 组件化框架，TypeScript 强化类型安全 |
+| 构建工具 | Vite 8 | 下一代前端构建工具，支持热更新；开发环境代理 `/api` 至后端 |
+| 状态管理 | Zustand 5 | 轻量级状态管理库，支持 localStorage 持久化 |
+| UI 组件库 | Semi Design | 字节跳动企业级组件库（@douyinfe/semi-ui 2.101+） |
 | HTTP 客户端 | Axios | 基于 Promise 的 HTTP 库，支持拦截器 |
-| 路由 | Vue Router 4 | Vue.js 官方路由 |
+| 路由 | react-router 8 | 数据路由 API（`createBrowserRouter` + `RouterProvider`），全站懒加载 |
+| 图表 | ECharts 6 | 监控数据可视化 |
+| 终端 | @xterm/xterm | 虚拟机终端控制台 |
+| VNC | @novnc/novnc | 基于 RFB 协议的远程控制台客户端 |
+| 其它 | spark-md5 / qrcode / nprogress | 分片上传哈希、TOTP 二维码、请求进度条 |
 
 ### 目录结构
 
 ```
 web/src/
-├── main.js              # 程序入口，注册插件
-├── App.vue              # 根组件
-├── api/                 # API 接口定义
-│   ├── auth.js          # 认证接口
-│   ├── vm.js            # 虚拟机接口
-│   ├── network.js       # 网络接口
-│   └── ...
-├── components/          # 公共组件
-│   ├── VmForm.vue       # VM 表单组件
-│   ├── SnapshotList.vue # 快照列表组件
-│   └── ...
-├── layout/              # 布局组件
-│   └── index.vue        # 主布局
-├── router/              # 路由配置
-│   └── index.js
-├── store/               # 状态管理
-│   ├── user.js          # 用户状态（Token/角色/云类型）
-│   └── vm.js            # VM 状态（列表缓存/访问历史）
-├── utils/               # 工具函数
-│   ├── request.js       # HTTP 请求封装（拦截器/二次验证）
-│   ├── clipboard.js     # 剪贴板操作
-│   └── vnc.js           # VNC 连接
-└── views/               # 页面视图
-    ├── dashboard/       # 首页仪表盘
-    ├── vm/              # 虚拟机管理
-    ├── network/         # 网络管理
-    ├── template/        # 模板管理
-    └── ...
+├── main.tsx              # 程序入口
+├── App.tsx               # 根组件（挂载全局高风险验证弹窗等）
+├── config/               # 全局配置
+│   ├── constants.ts      # API 基础地址、存储键、登录阶段常量
+│   ├── nav.tsx           # 管理员/普通用户导航菜单树
+│   └── site.ts           # 公共站点信息同步与文档标题
+├── api/                  # API 接口定义（按域拆分，统一 client.ts 请求层）
+│   ├── client.ts         # 全局 Axios 封装（拦截器/428 二次验证重试）
+│   ├── auth.ts / vm.ts / network.ts / vpc.ts / firewall.ts
+│   ├── storage.ts / storagePool.ts / publicIp.ts / ovs.ts
+│   ├── user.ts / task.ts / scheduler.ts / settings.ts / template.ts
+│   ├── host.ts / node.ts / migration.ts / infra.ts / passwordBreach.ts
+│   └── apiKey.ts
+├── components/           # 公共组件
+│   ├── business/         # HighRiskChallengeModal、TaskDetailSheet、TaskMessage
+│   └── common/           # PreviewModal 等通用组件
+├── features/vm-form/     # 创建/编辑虚拟机共享表单模块
+│   ├── CreateVmWizard.tsx / EditVmForm.tsx
+│   ├── sections/         # 表单分区组件（基础/硬件/存储/网络/直通/模板/应用导入等）
+│   └── dialogs/          # 各类配置弹窗（磁盘/内存/网卡/直通/XML/SMBIOS/RTC 等）
+├── hooks/                # 自定义 Hooks（VM 列表/详情、宿主机 SSE、主题、媒体查询、Modal 生命周期、内存优化）
+├── layout/               # 布局组件
+│   ├── index.tsx         # 主布局（Sidebar + TopBar + Outlet + TaskBar + 页面标签注册）
+│   └── components/       # Sidebar / TopBar / PageTabsBar / TaskBar / SponsorWidget
+├── router/               # 路由配置
+│   ├── index.tsx         # 数据路由（createBrowserRouter + RouterProvider）
+│   ├── pages.tsx         # 页面懒加载声明
+│   └── guards.tsx        # 路由守卫（RequireAuth + 轻量云白名单）
+├── stores/               # Zustand 状态管理
+│   ├── user.ts           # 用户会话（Token/角色/云类型/安全状态）
+│   ├── vm.ts             # VM 列表缓存与最近访问记录
+│   ├── task.ts           # 全局任务中心（SSE 增量更新）
+│   ├── app.ts            # 主题/侧边栏/站点标题/公共开关
+│   ├── highRisk.ts       # 428 高风险挑战状态机
+│   └── pageTabs.ts       # 顶部页面标签
+├── utils/                # 工具函数
+│   ├── clipboard.ts      # 剪贴板操作（含 HTTP 降级）
+│   ├── chunkUploader.ts  # 分片上传器（抽样哈希/断点续传/秒传）
+│   ├── vnc.ts / validate.ts / download.ts / format.ts
+│   ├── confirm.tsx / templateCategory.ts
+└── views/                # 页面视图
+    ├── dashboard/        # 工作台（管理员/用户双视图）
+    ├── vm/               # 虚拟机列表/详情/VNC 独立窗口
+    ├── network/ public-ip/ firewall/ storage-pool/ my-storage/
+    ├── template/ user/ node/ scheduler/ task/ settings/ security/
+    ├── api-docs/         # 接口文档中心（构建时自动生成数据）
+    ├── about/ login/ invite/ reset-password/ error/
 ```
 
 ### 请求封装与安全
 
-Axios 拦截器统一处理认证和错误：
+Axios 拦截器统一处理认证和错误，并在 HTTP 428（高风险二次验证）时自动拉起验证弹窗：
 
 ```mermaid
 sequenceDiagram
     participant U as 用户
-    participant R as Vue Router
+    participant R as React Router
     participant S as Axios 拦截器
     participant H as 后端处理器
     participant D as SQLite
 
     U->>R: 访问受保护页面
-    R->>S: 发起请求（注入 Token）
+    R->>S: 发起请求（注入 Bearer Token）
     S->>H: /api/... (带 Authorization)
     H->>D: 查询/更新数据
     H-->>S: JSON 响应 (code, message, data)
     S-->>U: 成功/错误提示
 
     alt 高风险操作
-        S->>U: 二次验证（TOTP/邮箱验证码）
+        S->>H: 后端返回 428 PreconditionRequired（携带挑战信息）
+        S->>U: 弹出全局验证框（TOTP/邮箱验证码/恢复码）
         U->>S: 输入验证码
-        S->>H: 带验证信息的请求
+        S->>H: 用独立 Axios 实例 POST /auth/high-risk/verify 获取 high_risk Token
+        S->>H: 携带 X-High-Risk-Token 自动重试原请求
     end
 ```
 
+:::info SSE 推送方式
+SSE 实时推送**不走 Axios**，前端使用浏览器原生 `EventSource`，通过 URL query 参数携带登录令牌建立连接；Axios 仅处理普通 HTTP 请求。
+:::
+
 ## 数据库设计
+
+### 存储配置
+
+SQLite 数据库默认位于 `./data/kvm_console.db`（`KVM_DB_PATH` 可配置），连接参数启用 WAl 模式以支持并发读写：`busy_timeout=5000`、`journal_mode=WAL`、`txlock=immediate`。启动时通过 GORM 自动迁移全部数据表，并执行多项版本兼容修复（列迁移、索引重建、默认管理员初始化等）。
 
 ### 核心数据表
 
 ```mermaid
 erDiagram
-    USERS ||--o{ VM_CREDENTIALS : has
     USERS ||--o{ USER_API_KEYS : has
-    USERS ||--o{ USER_TRAFFIC_DAILY : has
-    
-    VM_CACHE ||--o{ VM_STATS_RECORDS : has
-    VM_CACHE ||--o{ VM_LOCKS : has
-    VM_CACHE ||--o{ VM_SCHEDULES : has
-    
-    TASKS ||--o{ TASK_LOG : contains
-    
+    USERS ||--o{ USER_TRAFFIC_DAILIES : has
+    USERS ||--o{ LIGHTWEIGHT_VM_QUOTAS : has
+    USERS ||--o{ LIGHTWEIGHT_VM_REGISTRATIONS : has
+
+    VM_CACHES ||--o{ VM_STATS_RECORDS : has
+    VM_CACHES ||--o{ VM_LOCKS : has
+    VM_CACHES ||--o{ VM_SCHEDULES : has
+    VM_CACHES ||--o{ VM_CREDENTIALS : has
+    VM_CACHES ||--o{ VPC_VM_BINDINGS : has
+
+    VPC_SWITCHES ||--o{ VPC_VM_BINDINGS : has
+    VPC_SWITCHES ||--o{ VPC_SWITCH_TRAFFIC_MONTHLIES : has
+    VPC_SECURITY_GROUPS ||--o{ VPC_SECURITY_GROUP_RULES : has
+
+    PUBLIC_IPS ||--o| PUBLIC_IP_BINDINGS : binds
+
     SYSTEM_SETTINGS {
         string key PK
         string value
-        string description
     }
-    
+
     USERS {
-        string username PK
+        string username UK
         string password_hash
         string role
         string cloud_type
         string email
-        boolean enabled
+        string status
         int max_cpu
         int max_memory
         int max_disk
         int max_vm
     }
-    
-    VM_CACHE {
-        string name PK
-        string owner
+
+    VM_CACHES {
+        string name UK
+        string owner_username
         string status
-        int cpu
+        int vcpu
         int memory_mb
-        string ip
-        string os_type
+        string cached_ip
         string template
-    }
-    
-    TASKS {
-        string id PK
-        string type
-        string status
-        string params
-        int progress
-        string result
-        string creator
     }
 ```
 
 ### 数据表说明
 
+任务记录为**纯内存存储**（进程重启后清空），其余 28 张表通过 GORM 自动迁移持久化：
+
 | 表名 | 用途 | 关键字段 |
 |------|------|----------|
-| `users` | 用户账户信息 | username, password_hash, role, cloud_type |
-| `vm_cache` | 虚拟机信息缓存 | name, owner, status, cpu, memory_mb |
-| `tasks` | 异步任务记录 | id, type, status, progress, result |
-| `system_settings` | 系统配置项 | key, value, description |
-| `vm_credentials` | VM 登录凭据 | vm_name, username, password |
-| `vm_locks` | VM 锁定状态 | vm_name, locked, reason |
-| `vm_schedules` | VM 定时任务 | vm_name, action, cron_expr |
-| `storage_pools` | 存储池配置 | name, path, type, capacity |
-| `vpc_switches` | VPC 交换机 | name, vlan_id, bridge |
-| `vpc_security_groups` | 安全组 | name, rules_json |
+| `users` | 用户账户与配额 | username, password_hash, role, cloud_type, status, 配额字段（max_cpu/max_memory/max_disk/max_vm/max_storage/max_runtime_hours/max_port_forwards/max_snapshots/max_public_ips/带宽/流量） |
+| `user_api_keys` | API Key 凭证（哈希存储） | api_key_id, key_hash, key_prefix, revoked_at |
+| `user_traffic_dailies` | 用户日流量统计与限速标记 | username, date, traffic_down/up, is_limited_down/up |
+| `vm_caches` | 虚拟机列表缓存投影（与宿主机实时同步） | name, owner_username, status, vcpu, memory_mb, cached_ip, template, group_name |
+| `vm_credentials` | 虚拟机登录凭据（加密） | vm_name, username, password_enc, source |
+| `vm_locks` | VM 操作锁 | vm_name, locked, locked_by |
+| `vm_schedules` | VM 定时任务 | vm_name, event_type, action, schedule_type, run_at, next_run_at |
+| `vm_stats_records` | VM 历史监控数据 | vm_name, cpu_percent, mem_used, net_rx/tx, disk_rd/wr, recorded_at |
+| `host_stats_records` | 宿主机历史监控数据 | cpu_percent, mem_used/total, net/disk 累计字节, recorded_at |
+| `tasks` | 异步任务（内存，不落库） | type, status, progress, params, result, created_by |
+| `system_settings` | 系统配置键值对 | key, value |
+| `upload_sessions` | 分片上传会话（秒传/断点续传） | file_path（主键）, file_hash, received_bmp, status, expires_at |
+| `storage_pools`（host_storage_pools） | 存储池管理配置 | device_id, display_name, enabled, is_default, mount_path |
+| `network_bridges` | 宿主机网桥 | name, mode (nat/bridge), uplink_if, host_addrs, host_gateway, host_dns |
+| `port_forward_ips` | 端口转发手动 IP 映射 | vm_name, ip |
+| `vpc_switches` | VPC 交换机 | name, bridge_name, vlan_id, cidr, gateway_ip, dhcp_start/end, 安全策略与配额字段 |
+| `vpc_security_groups` | 安全组 | username, vm_name, name, is_default |
+| `vpc_security_group_rules` | 安全组规则 | direction, protocol, port_start/end, target_type, target_value |
+| `vpc_vm_bindings` | VM 与交换机/安全组绑定（支持多网卡 interface_order） | vm_name, switch_id, security_group_id, interface_order, nic_model |
+| `vpc_switch_traffic_monthlies` | 交换机月流量统计 | switch_id, month, traffic_down/up, is_limited_down/up |
+| `public_ips` | 公网 IP 资源池 | ip, cidr, gateway, uplink_if, supported_modes, status |
+| `public_ip_bindings` | 公网 IP 绑定关系 | public_ip_id, username, vm_name, vm_private_ip, mode, runtime_status |
+| `host_nodes` | 多节点主机（API 与 SSH 凭据加密存储） | name, api_base_url, ssh_host/port/user, status |
+| `scheduler_events` | 调度事件日志 | scheduler_key, vm_name, status, trigger_reason, started_at |
+| `auth_action_tokens` | 一次性操作令牌（邮箱验证等） | user_id, purpose, token_hash, expires_at |
+| `security_challenges` | 二次验证挑战（TOTP/邮箱/恢复码） | user_id, purpose, method, code_hash, expires_at |
+| `lightweight_vm_quotas` | 轻量云 VM 级配额 | vm_name, traffic/bandwidth/port_forwards/snapshots/runtime |
+| `lightweight_vm_traffic_monthlies` | 轻量云 VM 月流量 | vm_name, month, traffic_down/up |
+| `lightweight_vm_registrations` | 轻量云待确认开通注册 | username, vm_name, template, clone_mode, status |
 
 ### 配置优先级
 
@@ -526,18 +606,16 @@ erDiagram
 
 ```mermaid
 flowchart TD
-    Start(["启动"]) --> InitCfg["加载默认配置"]
+    Start(["启动"]) --> EnvFile["读取 .env 文件（KVM_ENV_FILE，默认 ./.env）"]
+    EnvFile --> InitCfg["读取环境变量并应用默认值"]
     InitCfg --> LoadDB["从数据库加载持久化设置"]
-    LoadDB --> Merge["合并配置"]
-    Merge --> EnvCheck{"检查环境变量"}
-    EnvCheck -->|存在| Override["环境变量覆盖"]
-    EnvCheck -->|不存在| UseDB["使用数据库配置"]
-    Override --> Security["ValidateSecurity()<br/>检查 JWT 密钥"]
-    UseDB --> Security
-    Security --> Done(["完成"])
+    LoadDB --> Merge["仅当环境变量未设置时，用数据库值覆盖"]
+    Merge --> Security["ValidateSecurity()<br/>检查 JWT 密钥"]
+    Security --> SyncEnv["配置变更时自动回写 .env 文件"]
+    SyncEnv --> Done(["完成"])
 ```
 
-**优先级顺序**：环境变量 > 数据库持久化设置 > 默认值
+**优先级顺序**：环境变量 > 数据库持久化设置 > 默认值。密钥类配置（如安全密钥）首次为空时会自动生成并回写 `.env`。
 
 ## 任务队列系统
 
@@ -551,31 +629,31 @@ graph TB
         API[API 请求]
         TaskCreate[创建任务]
     end
-    
+
     subgraph 任务队列["任务队列"]
-        Queue[内存队列<br/>有界 channel]
+        Queue[内存队列<br/>有界 channel（容量 100）]
         Worker1[Worker 1]
         Worker2[Worker 2]
         Worker3[Worker 3]
     end
-    
+
     subgraph 任务处理["消费者"]
         Handler[任务处理器<br/>按类型分发]
         Progress[进度回调]
     end
-    
+
     subgraph 实时推送["SSE 事件广播"]
         SSECenter[SSE 事件中心]
         Client1[客户端 1]
         Client2[客户端 2]
     end
-    
+
     subgraph 外部系统
         Libvirt[libvirt]
         System[系统命令]
         OVS[Open vSwitch]
     end
-    
+
     API --> TaskCreate
     TaskCreate --> Queue
     Queue --> Worker1
@@ -589,8 +667,8 @@ graph TB
     Handler --> System
     Handler --> OVS
     Progress --> SSECenter
-    SSECenter --> Client1
-    SSECenter --> Client2
+    SSECenter -->|task_progress 事件| Client1
+    SSECenter -->|task_progress 事件| Client2
 ```
 
 ### 任务生命周期
@@ -606,10 +684,10 @@ sequenceDiagram
 
     C->>API: 提交任务（类型 + 参数）
     API->>Q: Submit（类型, 参数, 创建者）
-    Q->>Q: 存储任务 / 广播 SSE
+    Q->>Q: 存储任务（纯内存）/ 广播 SSE
     Q-->>C: 返回任务 ID
 
-    loop 并发消费者
+    loop 并发消费者（3 个 Worker）
         W->>Q: 从任务通道取任务 ID
         Q-->>W: 任务 ID
         W->>Q: processTask（加载任务/更新状态）
@@ -620,7 +698,7 @@ sequenceDiagram
         else 不存在处理器
             W->>Q: 标记失败 / 广播 SSE
         end
-        W->>Q: 根据结果更新状态
+        W->>Q: 根据结果更新状态（含 context 取消判定）
         W->>SSE: 广播任务事件
     end
 
@@ -628,22 +706,32 @@ sequenceDiagram
     API->>Q: RegisterSSEClient / Cancel / Clear
 ```
 
+### 取消与清理语义
+
+| 行为 | 说明 |
+|------|------|
+| **取消** | `pending` 任务直接置为 `canceled`；`running` 任务触发 context 取消，由执行器收敛为 `canceled`；权限上管理员可取消任意任务，普通用户仅能取消自己的任务 |
+| **参数脱敏** | 任务列表返回前自动把 password/token/secret/private_key/credential 等键替换为 `******` |
+| **自动清理** | 每小时清理一次创建超过 24 小时且已结束的任务；任务数据不持久化，服务重启后清空 |
+| **防重复** | 同一 VM/资源已有活跃任务时（如迁移、重装、密码泄露扫描），重复提交会被拒绝 |
+
 ### 支持的任务类型
 
-| 任务类型 | 说明 | 可取消 | 进度回调 |
-|---------|------|--------|----------|
-| `clone` | 虚拟机克隆 | ✅ | ✅ |
-| `linked_clone` | 原生链式克隆 | ✅ | ✅ |
-| `batch` | 批量克隆 | ✅ | ✅ |
-| `create` | 普通创建 VM | ✅ | ✅ |
-| `reinstall` | 重装系统 | ❌ | ✅ |
-| `delete` | 删除 VM | ❌ | ✅ |
-| `snapshot` | 快照操作 | ❌ | ✅ |
-| `migration` | VM 迁移 | ❌ | ✅ |
-| `import` | 导入 VM | ✅ | ✅ |
-| `export` | 导出 VM | ✅ | ✅ |
-| `template` | 模板操作 | ❌ | ✅ |
-| `firewall_apply` | 防火墙策略应用 | ❌ | ✅ |
+系统共定义 50 种任务类型（`server/model/task.go`），按域分组如下：
+
+| 分组 | 任务类型 |
+|------|----------|
+| **虚拟机生命周期** | `create`（普通创建）、`delete`（删除）、`reinstall`（重装系统）、`make_vm_independent`（链式克隆转独立） |
+| **克隆** | `clone`（链式克隆）、`linked_clone`（原生链式克隆）、`batch`（批量克隆） |
+| **模板** | `prepare`（制作模板）、`template_export`（导出模板）、`template_import`（导入模板）、`template_linux_prepare`（预处理已导入 Linux 模板）、`delete_template`（删除模板） |
+| **快照** | `snapshot`（快照操作） |
+| **迁移** | `vm_migrate`（跨节点迁移虚拟机）、`vm_disk_migrate`（本机迁移虚拟机硬盘） |
+| **导入导出** | `export`（导出虚拟机）、`import`（导入虚拟机）、`import_appliance`（导入 OVF/OVA 虚拟机包）、`import_disk`（管理员绝对路径导入磁盘建机）、`import_disk_attach`（导入磁盘挂载到已有 VM）、`disk_transfer`（磁盘转移到用户存储） |
+| **磁盘** | `vm_disk_resize`（磁盘与来宾文件系统扩容）、`vm_disk_provision`（创建/关联磁盘并配置来宾挂载）、`vm_disk_guest_mount`（重试来宾磁盘挂载或扩容） |
+| **用户** | `deleteuser`（删除用户含资产清理）、`disable_user`（封禁用户并关闭其资源）、`runtime_quota_shutdown`（运行时长配额耗尽关机）、`lightweight_runtime_quota_shutdown`（轻量云单 VM 运行时长配额耗尽关机）、`lightweight_vm_provision`（轻量云注册 VM 开通） |
+| **网络与防火墙** | `apply_firewall` / `disable_firewall` / `rollback_firewall`（KVM 防火墙应用/禁用/回滚）、`update_firewall_geoip`（GeoIP 数据更新）、`enable_host_firewall` / `disable_host_firewall`（宿主机防火墙启停）、`ovs_repair`（OVS 网络修复）、`port_security`（端口安全启停/协调/隔离）、`public_ip_apply`（公网 IP 绑定/解绑/迁移）、`network_capture`（VM 网络抓包诊断） |
+| **存储** | `storage_format`（格式化挂载硬盘）、`storage_create_partition`（创建分区）、`storage_delete_partitions`（删除分区）、`storage_create_lvm_volume` / `storage_delete_lvm_volume`（LVM 卷创建/删除） |
+| **控制台与安全** | `rescue`（救援系统）、`reset_vm_password`（重置来宾虚拟机密码）、`vm_schedule_action`（定时任务动作执行）、`password_breach_scan`（泄露密码扫描）、`password_breach_notify`（泄露密码通知）、`enter_maintenance_mode` / `exit_maintenance_mode`（维护模式启停） |
 
 ### 任务状态
 
@@ -653,6 +741,7 @@ stateDiagram-v2
     Pending --> Running: Worker 获取
     Running --> Success: 执行成功
     Running --> Failed: 执行失败
+    Pending --> Cancelled: 用户取消
     Running --> Cancelled: 用户取消
     Success --> [*]
     Failed --> [*]
@@ -673,9 +762,9 @@ sequenceDiagram
     participant QEMU as QEMU/KVM
 
     QVM->>Lib: Connect("qemu:///system")
-    Lib->>Daemon: UNIX Socket 连接
+    Lib->>Daemon: UNIX Socket 连接（5 秒超时）
     Daemon-->>Lib: 连接句柄
-    Lib-->>QVM: 连接成功
+    Lib-->>QVM: 连接成功（验证 libvirt 版本）
 
     QVM->>Lib: LookupVM("vm-name")
     Lib->>Daemon: RPC 调用
@@ -693,20 +782,23 @@ sequenceDiagram
 
 **连接特性**：
 - 单例连接：全局共享一个 libvirt 连接，降低连接成本
-- 自动重连：连接断开时自动尝试重新建立
-- 错误降级：RPC 不可用时降级为 virsh 命令行
+- 自动重连：连接断开时按 1s/2s/4s 退避最多重试 3 次
+- 错误降级：RPC 不可用时自动降级为 virsh 命令行执行
+- 启动阻断：启动时 libvirt 连接失败会直接终止启动（`log.Fatal`）
 
 ### 支持的虚拟化操作
 
-| 操作 | libvirt API | 说明 |
-|------|-------------|------|
-| 创建 VM | `DefineXML` + `Create` | 定义并启动 |
-| 关机 | `Shutdown` / `Destroy` | 正常/强制关机 |
-| 暂停 | `Suspend` | 暂停 VM |
-| 恢复 | `Resume` | 恢复运行 |
-| 快照 | `SnapshotCreateXML` | 创建快照 |
-| 迁移 | `MigrateToURI` | 跨节点迁移 |
-| 克隆 | `DefineXML` + 磁盘复制 | 克隆 VM |
+| 操作 | 实现方式 | 说明 |
+|------|----------|------|
+| 创建 VM | `DefineXML` / virt-install XML + `Create` | 定义并启动 |
+| 开机 | `start` | 受维护模式、迁移锁、VM 锁校验 |
+| 关机 | `shutdown` | ACPI 优雅关机，受 VM 锁校验 |
+| 强制断电 | `destroy` | 立即停止，受 VM 锁校验 |
+| 重启 | `reboot` | ACPI 重启 |
+| 重置 | `reset` | 硬重置（相当于按复位键） |
+| 快照 | virsh snapshot-* | 创建/恢复/删除，内部与外部快照 |
+| 跨节点迁移 | virsh migrate（热）/ rsync + define（冷） | 见 [虚拟机迁移](/docs/tech/feature-analysis/vm-migration) |
+| 克隆 | 磁盘复制（完整）/ backing 链（链式） | 见 [模板管理原理](/docs/tech/feature-analysis/template-management) |
 
 ## 安全机制
 
@@ -721,35 +813,41 @@ sequenceDiagram
     participant DB as 数据库
 
     Client->>API: POST /auth/login
-    API->>DB: 验证用户名密码
-    DB-->>API: 用户信息
+    API->>DB: 验证用户名密码（登录限流）
 
     alt 启用 2FA
-        API-->>Client: 需要 2FA 验证
-        Client->>API: POST /auth/login/verify
-        API->>TokenSvc: 验证 TOTP 码
+        API-->>Client: stage=login_verify（签发 15 分钟 login 令牌）
+        Client->>API: POST /auth/login/verify（TOTP/恢复码/邮箱验证码）
     end
 
-    API->>TokenSvc: 生成访问令牌
-    TokenSvc->>Secret: 获取签名密钥
-    Secret-->>TokenSvc: 返回密钥
-    TokenSvc-->>API: 返回 JWT
+    alt 首次登录安全初始化未完成
+        API-->>Client: stage=bootstrap_security（签发 30 分钟 bootstrap 令牌）
+        Client->>API: 配置 SMTP / 绑定邮箱 / 绑定 2FA
+    end
+
+    alt 密码已泄露或首次强制改密
+        API-->>Client: 强制修改密码标记
+    end
+
+    API->>TokenSvc: 生成访问令牌（默认 24 小时，会话指纹绑定）
+    TokenSvc->>Secret: 获取签名密钥（支持定期轮转）
+    TokenSvc-->>API: 返回 JWT（HS256，iss=qvmconsole / aud=qvmconsole-api）
     API-->>Client: JWT Token
 
     Client->>API: 后续请求 (带 Token)
-    API->>TokenSvc: 验证并解析令牌
-    TokenSvc->>Secret: 校验签名
+    API->>TokenSvc: 验证并解析令牌（校验指纹、用户状态、密钥更新时间）
     TokenSvc-->>API: 用户身份信息
 ```
 
 ### JWT 令牌类型
 
-| 令牌类型 | 用途 | 有效期 | 刷新支持 |
-|---------|------|--------|----------|
-| **访问令牌** | 常规 API 访问 | 较短 | 支持 |
-| **引导令牌** | 首次登录后初始化 | 短 | 不支持 |
-| **登录验证令牌** | 二次验证（TOTP） | 极短 | 不支持 |
-| **高风险令牌** | 敏感操作（密码修改等） | 极短 | 不支持 |
+| 令牌类型 | 用途 | 有效期 | 说明 |
+|---------|------|--------|------|
+| **访问令牌（access）** | 常规 API 访问 | `KVM_JWT_EXPIRE_HOURS`（默认 24 小时） | 支持会话指纹绑定，JWT 密钥轮转后旧密钥签发的令牌可被识别失效 |
+| **引导令牌（bootstrap）** | 首次登录安全初始化（SMTP/邮箱/2FA） | 30 分钟 | 仅允许访问安全初始化与系统设置类接口 |
+| **登录验证令牌（login）** | 二次验证（TOTP/恢复码/邮箱验证码） | 15 分钟 | 仅允许访问登录验证接口 |
+| **高风险令牌（high_risk）** | 敏感操作（删除 VM、改密等） | 5 分钟 | 携带操作范围（operation），通过 `X-High-Risk-Token` 请求头使用 |
+| **找回密码令牌** | 邮箱验证选择账户 / 重置密码 | 10 分钟 / 15 分钟 | 一次性使用 |
 
 ### 权限控制
 
@@ -760,23 +858,23 @@ graph TB
         User[普通用户]
         Lightweight[轻量云用户]
     end
-    
+
     subgraph 权限
         AllAccess[全部功能<br/>系统设置/用户管理/VM管理]
         VMOwned[仅自己的 VM<br/>受限的网络和存储功能]
-        LimitedVM[受限 VM 功能<br/>套餐内的资源配额]
+        LimitedVM[受限 VM 功能<br/>仅工作台/我的虚拟机/任务中心/API文档/关于]
     end
-    
+
     subgraph 验证方式
         JWT[JWT Token]
         APIKey[API Key]
-        TOTP[TOTP/邮箱验证码]
+        TOTP[TOTP/邮箱验证码/恢复码]
     end
-    
+
     Admin --> AllAccess
     User --> VMOwned
     Lightweight --> LimitedVM
-    
+
     AllAccess --> JWT
     AllAccess --> APIKey
     VMOwned --> JWT
@@ -784,35 +882,48 @@ graph TB
     LimitedVM --> JWT
 ```
 
+- 管理员：可见全部导航（工作台、虚拟机、模板、网络中心、公网 IP、防火墙、存储池、我的存储、用户管理、节点管理、调度事件、任务中心、系统设置、安全中心、API 文档、关于项目）。
+- 普通用户（弹性云）：可见工作台、我的虚拟机、VPC 网络、我的存储、任务中心、安全中心、API 文档、关于项目。
+- 轻量云用户：在上述基础上进一步隐藏「网络」与「存储」分组，路由守卫限制只能访问白名单页面。
+
 ### 高风险操作二次验证
+
+敏感操作在后端统一要求二次验证，前端收到 HTTP 428 后弹出验证框：
 
 | 操作 | 验证方式 | 说明 |
 |------|----------|------|
-| 删除 VM | TOTP/邮箱验证码 | 不可逆操作 |
-| 重置密码 | TOTP/邮箱验证码 | 安全敏感 |
-| 导出 VM | TOTP/邮箱验证码 | 数据安全 |
-| 修改系统设置 | TOTP/邮箱验证码 | 系统安全 |
-| 删除用户 | TOTP/邮箱验证码 | 不可逆操作 |
+| 删除/强制删除 VM | TOTP/邮箱验证码/恢复码 | 不可逆操作 |
+| 重装系统 | 严格二次验证 | 删除全部快照并重建系统盘 |
+| 重置来宾密码 / 修改登录密码 / 修改用户名 | TOTP/邮箱验证码 | 账户与凭据安全 |
+| 生成/轮换/撤销 API Key | TOTP/邮箱验证码 | 凭证安全 |
+| 绑定邮箱 / 关闭 2FA / 重新生成恢复码 | TOTP/邮箱验证码（部分需当前密码） | 账户安全 |
+| 防火墙应用/禁用/回滚、启用宿主机防火墙 | TOTP/邮箱验证码 | 网络策略变更 |
+| 公网 IP 绑定/解绑/迁移/应用/删除 | TOTP/邮箱验证码 | 对外暴露变更 |
+| 虚拟机迁移、维护模式启停、删除用户等 | TOTP/邮箱验证码 | 高风险基础设施操作 |
+
+:::info 开发模式
+系统设置中的「开发环境模式」可绕过二段验证、首次强制绑定与高风险操作验证，仅用于开发调试，生产环境必须关闭。
+:::
 
 ## SSE 实时推送
 
-QVMConsole 使用 Server-Sent Events 实现实时数据推送：
+QVMConsole 使用 Server-Sent Events 实现实时数据推送，前端基于原生 `EventSource` 携带登录令牌建立连接：
 
 ```mermaid
 sequenceDiagram
     participant Client as 浏览器
     participant API as API 服务
     participant Libvirt as libvirt
-    
-    Client->>API: 建立 SSE 连接
-    API->>Libvirt: 订阅虚拟机事件
-    
-    loop 实时推送（列表 2 秒/详情 3 秒）
-        Libvirt-->>API: 状态变更事件
+
+    Client->>API: 建立 SSE 连接（?token=***
+    API->>Libvirt: 读取虚拟机状态/统计
+
+    loop 实时推送（列表 2 秒/详情 3 秒/宿主机 5 秒）
+        Libvirt-->>API: 状态与统计
         API-->>Client: 推送更新数据
         Client->>Client: 更新界面显示
     end
-    
+
     Client->>API: 关闭连接
     API->>API: 清理连接资源
 ```
@@ -821,16 +932,17 @@ sequenceDiagram
 
 | 端点 | 推送内容 | 推送频率 |
 |------|----------|----------|
-| `/api/vm/sse` | VM 列表状态 | 2 秒 |
+| `/api/vm/sse`、`/api/self/vms/sse` | VM 列表状态（管理员/用户分流） | 2 秒 |
 | `/api/vm/:name/sse` | 单个 VM 详情 | 3 秒 |
-| `/api/host/stats/sse` | 宿主机资源 | 5 秒 |
-| `/api/task/sse` | 任务进度 | 实时 |
+| `/api/host/stats/sse` | 宿主机资源统计 | 5 秒 |
+| `/api/task/sse` | 任务进度（connected + task_progress 事件） | 实时 |
 | `/api/scheduler/events/sse` | 调度事件 | 实时 |
 
-**SSE 优势**：
+**SSE 特性**：
 - 实时性：状态变更立即推送，无需轮询
 - 低开销：相比轮询方式，减少不必要的网络请求
-- 自动重连：连接断开后自动尝试重连
+- 自动重连：前端断线后按固定间隔（5 秒）自动尝试重连
+- 权限过滤：任务 SSE 按用户归属过滤任务事件
 
 ## 部署架构
 
@@ -844,11 +956,11 @@ graph TB
         OVS[Open vSwitch]
         QEMU[QEMU/KVM]
     end
-    
+
     subgraph 客户端
         Browser[浏览器]
     end
-    
+
     Browser --> Nginx
     Nginx --> QVMConsole
     QVMConsole --> SQLite
@@ -863,11 +975,10 @@ graph TB
 | 组件 | 配置 | 说明 |
 |------|------|------|
 | Web 服务器 | Nginx | 反向代理 + SSL 终止 |
-| 应用服务 | QVMConsole | systemd 管理，开机自启 |
-| 数据库 | SQLite | 本地文件，自动迁移 |
+| 应用服务 | QVMConsole | systemd 管理，开机自启；前端静态文件由后端内嵌服务（`web-dist` 目录）或 Nginx 托管 |
+| 数据库 | SQLite | 本地文件，WAL 模式，自动迁移 |
 | 虚拟化 | libvirt + QEMU/KVM | UNIX Socket 通信 |
-| 网络 | Open vSwitch | VLAN 隔离、流表管理 |
-| 前端 | 静态文件 | Nginx 托管或内嵌服务 |
+| 网络 | Open vSwitch | VLAN 隔离、流表管理、端口安全 |
 
 ## 性能考量
 
@@ -875,21 +986,21 @@ graph TB
 
 | 缓存层次 | 实现方式 | 效果 |
 |----------|----------|------|
-| VM 缓存 | 内存中缓存虚拟机状态 | 减少 libvirt 调用 |
-| 配置缓存 | 启动时加载到内存 | 减少数据库访问 |
-| 用户权限缓存 | 请求上下文缓存 | 减少重复查询 |
+| VM 缓存 | `vm_caches` 表作为列表投影，后台采集器每 10 秒刷新、60 秒持久化 | 列表接口不阻塞于 libvirt 实时查询 |
+| 配置缓存 | 启动时加载到内存，变更时同步数据库与 .env | 减少数据库访问 |
+| 前端缓存 | Zustand vm store 缓存列表与最近访问，SSE 增量更新 | 页面切换秒开 |
 
 ### 并发处理
 
-- **任务队列**：默认 3 个工作线程，可根据资源与负载调整
+- **任务队列**：默认 3 个工作协程，队列容量 100，可根据资源与负载调整
 - **libvirt 连接**：单例模式，自动重连，降低连接成本
-- **SSE 推送**：异步推送，不阻塞主请求处理
+- **SSE 推送**：异步广播（非阻塞，缓冲区满则丢弃），不阻塞主请求处理
 
 ### 网络与存储优化
 
-- 支持 OVS 网络后端与带宽总限速
-- 结合 IOPS 限制与磁盘迁移优化
-- 优先使用 go-libvirt RPC，必要时降级为 virsh 命令行
+- 支持 OVS 网络后端、全局带宽总限速与交换机级带宽/流量配额
+- 磁盘 IOPS 限制（QEMU throttle）与磁盘迁移工具
+- 优先使用 go-libvirt RPC，必要时自动降级为 virsh 命令行
 
 ## 故障排查指南
 
@@ -897,21 +1008,23 @@ graph TB
 
 | 问题 | 症状 | 解决方案 |
 |------|------|----------|
-| JWT 密钥错误 | 启动时安全检查失败 | 检查是否使用默认密钥，生产环境必须修改 |
-| libvirt 连接失败 | 无法连接 libvirt 守护进程 | 确认 libvirtd 服务运行状态 |
-| 数据库异常 | 迁移失败或连接错误 | 检查数据库路径和权限 |
+| JWT 密钥错误 | 启动时安全检查失败退出 | 生产环境禁止使用默认密钥，通过 `KVM_JWT_SECRET` 设置强密钥 |
+| libvirt 连接失败 | 启动直接终止并输出错误 | 确认 libvirtd 服务运行状态与 `/var/run/libvirt/libvirt-sock` 权限 |
+| 数据库异常 | 迁移失败或连接错误 | 检查数据库路径和权限（默认 `./data/kvm_console.db`） |
 
 ### 运行时问题
 
 | 问题 | 症状 | 解决方案 |
 |------|------|----------|
-| 认证失败 | 401 Unauthorized | 检查 Token 有效性和时间同步 |
-| 权限不足 | 403 Forbidden | 检查用户角色和权限配置 |
-| 网络异常 | VM 无法上网 | 检查 OVS 网桥和 VPC 配置 |
-| 任务卡住 | 任务长时间无进度 | 通过任务队列接口查看状态，必要时取消重试 |
+| 认证失败 | 401 Unauthorized | 检查 Token 有效性和服务器时间同步；会话指纹变化（IP/UA 大变）也会导致令牌失效 |
+| 权限不足 | 403 Forbidden | 检查用户角色和云类型（轻量云功能受限） |
+| 网络异常 | VM 无法上网 | 在网络概览执行一键检测/修复，检查 OVS 网桥和 VPC 配置 |
+| 任务卡住 | 任务长时间无进度 | 通过任务中心查看状态，必要时取消重试 |
+| 428 二次验证 | 敏感操作被拦截 | 完成 TOTP/邮箱验证码验证后自动重试，或检查 2FA/邮箱绑定状态 |
 
 ### 日志定位
 
-- 根据日志级别与类型筛选
-- 关注 libvirt 与命令执行日志
-- 使用请求日志中间件追踪请求链路
+- 四类日志文件：`log/app.log`（应用）、`log/request.log`（请求）、`log/cmd.log`（命令执行）、`log/libvirt.log`（libvirt 交互）
+- 日志按大小（默认 100MB）与每日 00:00 轮转，默认保留 7 天并压缩归档
+- 系统设置页提供日志查看、导出与清理功能
+- 使用请求日志中间件追踪请求链路（方法/路径/状态码/耗时/来源 IP）

@@ -8,6 +8,10 @@ description: 基于 9p filesystem 的宿主机与 VM 目录共享
 
 文件共享功能允许用户将宿主机目录挂载到虚拟机内部，实现宿主机与虚拟机之间的文件交换。系统基于 libvirt 的 9p filesystem（Plan 9 文件系统协议）实现，通过 `virsh attach-device` 将共享目录以 virtio 设备形式注入虚拟机 XML 配置。
 
+:::info 适用范围
+文件共享（含「我的存储」挂载）为弹性云功能，轻量云用户不可用；「我的存储」挂载复用同一套 9p 底层实现。
+:::
+
 ## 功能概述
 
 ```mermaid

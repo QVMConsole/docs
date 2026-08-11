@@ -25,9 +25,12 @@ QVMConsole 的模板系统是实现**毫秒级创建虚拟机**的核心基础�
 | `category` | 二级分类（Linux 发行版、Windows 版本或 OpenWrt 衍生版） |
 | `boot_type` | 启动类型：`bios` / `uefi` |
 | `boot_verified` | 启动类型是否已确认验证 |
+| `nvram_path` | UEFI NVRAM 变量文件路径（默认同名 `.nvram.fd`） |
 | `template_user` | 模板中的默认用户名（用于克隆时的用户名重命名） |
-| `cloud_init_mode` | 初始化模式：`nocloud` / `configdrive` / `fnos` / `none` |
-| `default_config` | 模板默认硬件配置（CPU、内存、磁盘大小、网卡模型等） |
+| `cloud_init_mode` | 初始化模式：`nocloud` / `configdrive` / `fnos` / `openwrt` / `none` |
+| `post_boot_command` | 克隆后的启动后命令（可选） |
+| `post_boot_blocking` | 启动后命令是否阻塞等待执行完成 |
+| `default_config` | 模板默认硬件配置（vCPU、内存、磁盘大小、磁盘总线、网卡模型、显示设备、CPU 拓扑模式、首次重启模式） |
 | `template_uid` | 模板族唯一标识（跨节点跟踪模板血缘） |
 | `node_id` | 当前模板节点唯一标识 |
 | `parent_node_id` | 父节点 ID（形成树形结构） |
@@ -40,6 +43,11 @@ QVMConsole 的模板系统是实现**毫秒级创建虚拟机**的核心基础�
 | `file_size` | 磁盘文件字节数 |
 | `created_from_vm` | 来源虚拟机名称 |
 | `created_at` | 创建时间 |
+| `linux_init_status` / `linux_init_checked` / `linux_init_error` | Linux 模板 cloud-init 依赖预处理状态（`unknown` / `ready` / `failed`） |
+
+:::info 旧字段兼容
+`root_password` 字段已废弃，仅用于读取旧版元数据；新制作的模板不再写入该字段。磁盘文件缺失 `.meta.json` 时，模板会按文件名推断类型，且 `clone_visible` 强制为 false（不允许普通用户克隆）。
+:::
 
 :::info 文件保护
 模板文件和元数据文件在创建后会被自动设置为**不可变属性**（`chattr +i`），防止意外删除或修改。只有通过模板管理接口才能删除（删除前会先移除不可变属性）。
@@ -62,9 +70,11 @@ QVMConsole 的模板系统是实现**毫秒级创建虚拟机**的核心基础�
 模板类型可通过以下方式确定：
 1. 用户在制作模板时显式指定
 2. 从模板名称自动推断：
-   - 名称包含 `win` 标识为 Windows
+   - 名称包含 `win` / `windows` 标识为 Windows
    - 名称包含 `openwrt` / `lede` / `istoreos` 标识为 OpenWrt
-   - 名称包含 `fnos` 标识为 FnOS
+   - 名称包含 `fnos` / `nas` 标识为 FnOS
+
+从虚拟机制作模板时，若选择 `other` 类型，系统会强制关闭系统初始化（`cloud_init_mode=none`）并清空模板用户与启动后命令。
 
 ---
 
@@ -211,10 +221,10 @@ graph LR
 
 ### 导出机制
 
-模板导出生成 `.tar.gz` 格式的模板包，包内结构：
+模板导出为异步任务（`template_export`），生成 `.tar.gz` 格式的模板包，包内结构：
 
 ```
-<template-export>.tar.gz
+<template>-template-export.tar.gz
 ├── manifest.json              # 导出清单
 ├── <node_id_1>.qcow2          # 节点磁盘文件
 ├── <node_id_1>.meta.json      # 节点元数据
@@ -223,13 +233,15 @@ graph LR
 ```
 
 `manifest.json` 包含：
-- 版本号、导出时间、导出范围（`node` / `root`）
+- 版本号（v1）、导出时间、导出范围（`node` / `root`）
 - 模板族 UID、根节点 ID
-- 各节点的文件名、哈希校验值、元数据
+- 各节点的文件名、文件大小、MD5/SHA256 哈希校验值与完整元数据
 
 支持两种导出范围：
 - **单节点导出**（`scope=node`）：仅导出指定模板节点
 - **整棵子树导出**（`scope=root`）：导出从根节点开始的整棵子树
+
+导出时非 qcow2 格式的磁盘会自动转换为 qcow2 并重算哈希。模板包生成在模板导出目录（`template_export_dir`），通过 `/template/download/:filename` 下载；导出文件默认保留 24 小时，过期自动清理，也可手动删除。
 
 ### 导入机制
 
@@ -240,24 +252,43 @@ graph LR
 | `.tar.gz` / `.tgz` | 标准模板包导入（含元数据和树形结构） |
 | `.qcow2` | 旧版单文件导入（自动创建元数据，独立根节点） |
 
-导入前系统会进行**预览校验**：
-1. 解析 `manifest.json`，检查包完整性
-2. 校验每个节点的 MD5 和 SHA256 哈希
-3. 检查节点 ID 和文件名是否与本地模板冲突
-4. 根据 `template_uid` 判断是新建还是更新已有模板族
+#### 模板包分片上传
 
-导入成功后，模板文件同样会被设置不可变属性保护。
+模板包通过分片上传接口（`/template/upload/init`、`/upload/chunk`、`/upload/complete`）上传，与"我的存储"共用同一套分片上传引擎：
+
+- **秒传**：初始化时按文件哈希与大小匹配已完成会话或已存在文件（抽样哈希校验），命中则直接完成
+- **断点续传**：初始化返回已接收分片列表，前端跳过已上传分片
+- **完成校验**：分片到齐后执行抽样哈希校验（2MB 窗口、1GB 步长、最少 3 个样本，尾部追加文件大小与文件名），校验失败会拒绝落盘
+- **自动清理**：上传会话 24 小时过期，后台每 30 分钟清理一次；可手动取消已上传的临时包
+
+#### 导入预览与确认
+
+模板包导入采用"预览 → 确认"两步流程：
+
+1. **预览校验**：解析 `manifest.json`，检查包完整性、每个节点的 MD5 和 SHA256 哈希、节点 ID 和文件名是否与本地模板冲突
+2. **模式判定**：根据 `template_uid` 判断是新建模板族（create）还是更新已有模板族（update）；更新模式会先校验本地既有节点的完整性
+3. **确认导入**：凭预览令牌提交异步导入任务；非 qcow2 磁盘自动转换为 qcow2；Linux 模板仅当依赖预处理未就绪时才补装 cloud-init 等依赖；导入后重算哈希、回填启动类型、落盘元数据并设置不可变属性
+
+### Linux 模板依赖预处理
+
+Linux 模板要求磁盘内预装 `cloud-init`、`growpart`、QEMU Guest Agent 等克隆依赖。系统提供专门的预处理能力：
+
+| 接口 | 说明 |
+|------|------|
+| `GET /template/:name/prepare-linux/check` | 检查预处理链式依赖（若子树中仍存在链式克隆虚拟机，则禁止原地改写模板磁盘） |
+| `POST /template/:name/prepare-linux` | 提交异步任务（`template_linux_prepare`）：离线安装依赖（使用来宾自带软件源）、重算哈希并把 `linux_init_status` 置为 `ready` |
+
+从虚拟机制作模板时也会自动执行一次依赖预装；安装失败仅记录告警（`linux_init_status=failed`），不阻断模板制作。
 
 ---
 
 ## VM 模板来源追踪
 
-每个通过模板克隆的虚拟机，其 libvirt XML 中都会注入一个 `template-source` 注解，记录：
+每个通过模板克隆的虚拟机，其 libvirt XML 中都会注入一个 `template-source` 自定义元数据注解，记录：
 
 | 属性 | 说明 |
 |------|------|
 | `template_name` | 来源模板名称 |
-| `template_uid` | 来源模板族 UID |
 | `node_id` | 来源模板节点 ID |
 | `clone_mode` | 克隆模式（`linked` / `full`） |
 

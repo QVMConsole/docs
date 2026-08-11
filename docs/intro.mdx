@@ -36,14 +36,20 @@ slug: /
 
 #### 章节内容
 
-- [创建方式](/docs/tech/virtual-machine/creation-modes) - 四种虚拟机创建方式及其适用场景
+- [创建方式](/docs/tech/virtual-machine/creation-modes) - ISO 安装、模板克隆、磁盘导入与 OVF/OVA 导入等创建方式
 - [基础配置](/docs/tech/virtual-machine/basic-config) - 名称、备注、应用场景和操作系统配置
 - [硬件规格](/docs/tech/virtual-machine/hardware-spec) - CPU、内存、虚拟化引擎等硬件参数
-- [存储配置](/docs/tech/virtual-machine/storage-config) - 磁盘、ISO镜像、存储池和IOPS限制
-- [网络配置](/docs/tech/virtual-machine/network-config) - 网卡、VPC网络、安全组和流量管控
+- [存储配置](/docs/tech/virtual-machine/storage-config) - 磁盘、ISO镜像、光驱软驱、存储池和IOPS限制
+- [网络配置](/docs/tech/virtual-machine/network-config) - 网卡、多网口、VPC网络、安全组和流量管控
 - [系统配置](/docs/tech/virtual-machine/system-config) - 引导顺序、开机自启和系统行为
 - [高级设置](/docs/tech/virtual-machine/advanced-settings) - 开发者选项和底层调优参数
+- [快照管理](/docs/tech/virtual-machine/snapshot-management) - 内部/外部快照、NVRAM 兼容与配额
+- [磁盘迁移与扩容](/docs/tech/virtual-machine/disk-migration-expansion) - 本机磁盘迁移与来宾分区扩容
 - [硬件直通](/docs/tech/virtual-machine/hardware-passthrough) - PCI设备直通和VFIO配置
+- [列表与运行管理](/docs/tech/virtual-machine/vm-list-operations) - 视图、电源操作、锁定、分组标签与详情页
+- [远程控制台（VNC / SPICE）](/docs/tech/virtual-machine/remote-console) - VNC WebSocket 控制台与 SPICE 直连
+- [导入与导出](/docs/tech/virtual-machine/import-export) - 虚拟机导出（qcow2/OVA）与 OVF/OVA 导入
+- [重装与救援](/docs/tech/virtual-machine/reinstall-rescue) - 重装系统、救援模式与来宾密码重置
 
 ### 网络
 
@@ -55,11 +61,12 @@ slug: /
 
 #### 章节内容
 
-- [网络概览](/docs/tech/network/overview) - OVS 基础网络状态、网桥管理与端口监控
-- [VPC 交换机](/docs/tech/network/vpc-switch) - 交换机创建、VLAN 隔离与流量配额管理
+- [网络概览](/docs/tech/network/overview) - OVS 基础网络状态、网桥管理、接口配置与端口监控
+- [VPC 交换机](/docs/tech/network/vpc-switch) - NAT/桥接直通交换机、配额与桥接安全管理
 - [安全组策略](/docs/tech/network/security-group) - 安全组规则配置与 VPC 访问控制
 - [端口转发](/docs/tech/network/port-forward) - 公网到虚拟机的流量转发规则管理
 - [ACL 管理](/docs/tech/network/acl) - VPC ACL nftables 规则的预览与应用
+- [端口安全](/docs/tech/network/port-security) - OVS 端口反欺骗与速率限制
 
 ### 公网 IP
 
@@ -130,6 +137,8 @@ slug: /
 #### 章节内容
 
 - [用户管理](/docs/tech/user-manage/user-management) - 用户生命周期、配额管理与安全认证
+- [安全中心](/docs/tech/user-manage/security-center) - 邮箱绑定、两步验证、API 凭证、密码与用户名管理
+- [API 接口与安全调用](/docs/tech/user-manage/api-console-auth) - 接口文档中心、API Key 认证与高风险二次验证
 
 ### 调度事件
 
@@ -198,8 +207,8 @@ bash start-dev.sh
 
 | 组件 | 技术 |
 |------|------|
-| 前端 | Vue.js 3 + Vite + Element Plus + Pinia + Axios |
-| 后端 | Go (Gin) + go-libvirt (digitalocean/go-libvirt) + GORM |
+| 前端 | React 19 + Vite + Semi Design + Zustand + Axios + react-router |
+| 后端 | Go 1.26 (Gin) + go-libvirt (digitalocean/go-libvirt) + GORM |
 | 数据库 | SQLite（GORM 自动迁移） |
 | 虚拟化 | KVM/QEMU，通过 go-libvirt RPC 通信 |
 | 网络 | Open vSwitch (OVS) + Linux Bridge，nftables/iptables |
