@@ -1,0 +1,132 @@
+/* 文档中可点击放大的图片,保留原有宽度约束并提示可交互 */
+.zoomable {
+  cursor: zoom-in;
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--ifm-global-radius);
+  transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.zoomable:hover {
+  filter: brightness(0.94);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+
+/* 全屏预览遮罩层,z-index 高于 Docusaurus 导航栏确保置顶 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.86);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  padding: 2rem;
+  outline: none;
+  animation: zoom-fade-in 0.18s ease;
+}
+
+@keyframes zoom-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 放大后的图片,限制在视口内并保持比例 */
+.previewImg {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  /* transform 由内联样式控制,使用极短过渡保证拖拽跟手 */
+  transition: transform 0.05s linear;
+  will-change: transform;
+}
+
+.previewImg:active {
+  cursor: grabbing;
+}
+
+/* 右上角关闭按钮 */
+.closeBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.closeBtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 底部居中的图片标题说明 */
+.caption {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 80%;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  border-radius: var(--ifm-global-radius);
+  text-align: center;
+}
+
+/* 左下角操作提示,不阻挡点击 */
+.hint {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+  border-radius: var(--ifm-global-radius);
+  pointer-events: none;
+}
+
+/* 移动端调整间距与提示显示 */
+@media (max-width: 480px) {
+  .overlay {
+    padding: 1rem;
+  }
+
+  .previewImg {
+    max-width: 95vw;
+    max-height: 80vh;
+  }
+
+  .hint {
+    display: none;
+  }
+}

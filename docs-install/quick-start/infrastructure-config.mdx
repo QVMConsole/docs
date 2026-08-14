@@ -16,9 +16,9 @@ description: QVMConsole 基础设施配置指南
 
 QVMConsole 采用 OVS（Open vSwitch）交换机体系，架构类似 VMware ESXi。每个虚拟机的网卡必须接入一个交换机，而每个交换机需要对应一个上行链路（物理网口）。
 
-系统提供两种网络模式：
+系统提供三种网络模式：
 
-### NAT 模式（公有云推荐）
+### DHCP 模式（公有云或临时测试推荐）
 
 适用于虚拟机不需要从外部直接访问的场景。系统内部 DHCP 服务统一管理网络和分配 IP，若需从外部访问虚拟机，可使用[端口转发](/docs/tech/network/port-forward)功能。
 
@@ -28,9 +28,9 @@ QVMConsole 采用 OVS（Open vSwitch）交换机体系，架构类似 VMware ESX
 
 **配置步骤：**
 
-![NAT 模式配置](https://images.xiaozhuhouses.asia/i/2026/06/12/x40x6u.png)
+![NAT 模式配置](https://images.xiaozhuhouses.asia/i/2026/08/14/keq4hg.png)
 
-### 桥接模式（私有云推荐）
+### 桥接模式（私有云或由上级网络统一管理推荐）
 
 桥接模式最适合私有云场景，将物理网口直接与虚拟机打通，由上级路由器统一管理。
 
@@ -38,15 +38,18 @@ QVMConsole 采用 OVS（Open vSwitch）交换机体系，架构类似 VMware ESX
 
 **配置步骤：**
 
-**第一步：创建物理网桥**
-
-![创建物理网桥](https://images.xiaozhuhouses.asia/i/2026/06/12/x4obpd.png)
-
-**第二步：创建交换机**
-
-![创建交换机](https://images.xiaozhuhouses.asia/i/2026/06/12/x5e84z.png)
+![创建交换机](https://images.xiaozhuhouses.asia/i/2026/08/14/khowt5.png)
 
 > 保持默认配置即可。如需了解网络配置的技术细节，请参阅 [VPC 交换机](/docs/tech/network/vpc-switch)。
+
+### 虚拟空交换机模式（开发或网络测试环境推荐）
+
+虚拟机空交换机就是创建一个虚拟机的交换机但是没有插任何网口。您可以自行发挥网络架构方案，例如使用爱快或openwrt组建一个虚拟机网络，由您这里面的软路由负责整个网络管理。
+
+**配置步骤：**
+
+![创建交换机](https://images.xiaozhuhouses.asia/i/2026/08/14/kk7wtp.png)
+
 
 ## 创建存储池
 
