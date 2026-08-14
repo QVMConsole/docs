@@ -62,15 +62,16 @@ slug: /
 #### 章节内容
 
 - [网络概览](/docs/tech/network/overview) - OVS 基础网络状态、网桥管理、接口配置与端口监控
-- [VPC 交换机](/docs/tech/network/vpc-switch) - NAT/桥接直通交换机、配额与桥接安全管理
-- [安全组策略](/docs/tech/network/security-group) - 安全组规则配置与 VPC 访问控制
+- [VPC 交换机](/docs/tech/network/vpc-switch) - NAT/物理直通/空交换机、配额、共享直通与桥接安全管理
+- [安全组策略](/docs/tech/network/security-group) - 安全组规则配置与 VPC 访问控制（支持 IPv6）
 - [端口转发](/docs/tech/network/port-forward) - 公网到虚拟机的流量转发规则管理
 - [ACL 管理](/docs/tech/network/acl) - VPC ACL nftables 规则的预览与应用
 - [端口安全](/docs/tech/network/port-security) - OVS 端口反欺骗与速率限制
+- [端口镜像](/docs/tech/network/port-mirror) - 基于 tc mirred 与 OVS FLOOD 的宿主机流量镜像
 
 ### 公网 IP
 
-本章节介绍 QVMConsole 的公网 IP 管理功能，支持 1:1 NAT、经典网络-路由和经典网络-桥接三种模式。适合以下人群阅读：
+本章节介绍 QVMConsole 的公网 IP 管理功能，支持 1:1 NAT、经典网络-路由和经典网络-桥接三种模式，覆盖公网 IPv4 与路由型公网 IPv6，并提供来宾同步与批量操作。适合以下人群阅读：
 
 - **运维人员**：管理公网 IP 资源和绑定关系
 - **网络管理员**：理解 NAT、路由和桥接三种模式的差异
@@ -78,7 +79,7 @@ slug: /
 
 #### 章节内容
 
-- [公网IP管理](/docs/tech/public-ip/public-ip-management) - 公网IP的新增、绑定、解绑、迁移与规则管理
+- [公网IP管理](/docs/tech/public-ip/public-ip-management) - 公网 IPv4/IPv6 的新增、绑定、解绑、迁移、来宾同步与批量操作
 
 ### 防火墙
 

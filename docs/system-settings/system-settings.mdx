@@ -117,6 +117,7 @@ flowchart LR
 | DHCP 起始 / 结束 | `ovs_dhcp_start` / `ovs_dhcp_end` | `KVM_OVS_DHCP_START/END` | 留空时按网段前缀使用 .2 / .254 |
 | 外网网卡 | `external_nic` | `KVM_EXTERNAL_NIC` | 端口转发使用的外网网卡 |
 | 公网 IP | `host_ip` | `KVM_HOST_IP` | 留空自动检测，可手动固定 |
+| 公网 IPv6 前缀检测周期 | `public_ipv6_sync_interval_seconds` | `KVM_PUBLIC_IPV6_SYNC_INTERVAL_SECONDS` | 范围 10-3600 秒，默认 60；定期检查上联网卡的动态公网 IPv6 前缀，前缀变化后保留每个绑定 VM 的主机位并自动重写 Proxy NDP 与 /128 路由 |
 | 网络等待就绪检测 | `network_wait_online_disabled` | `KVM_NETWORK_WAIT_ONLINE_DISABLED` | 关闭后启动时不再等待网络在线 |
 
 ### 端口安全参数
@@ -291,6 +292,7 @@ SMTP 配置用于平台的邮件发送功能，包括邮箱绑定、邀请注册
 | 请求过滤 | `request_filter_enabled` | 危险路径/请求内容过滤中间件开关，默认启用 |
 | 泄露密码检测 | `password_breach_check_enabled` | 密码输入时执行 HIBP k-匿名泄露检测，默认启用 |
 | 定时泄露扫描 | `scheduled_password_breach_check_enabled` | 每日 00:00 自动提交泄露密码扫描任务，默认启用；支持手动「立即执行」（高风险） |
+| 安全组默认全放通 | `security_group_default_allow_all` | 默认关闭；开启后新建安全组自动添加 IPv4（0.0.0.0/0）与 IPv6（::/0）全放通入站规则，开启时需二次确认，详见[安全组策略](/docs/tech/network/security-group) |
 | 开发环境模式 | `development_mode` | 绕过二段验证、首次强制绑定与高风险操作验证 |
 
 :::danger[安全警告]
@@ -346,6 +348,10 @@ sequenceDiagram
 | **磁盘占用** | 展示全部日志文件（app/request/cmd/libvirt 四类，含 `.log.gz` 归档）总占用与文件列表 |
 | **文件删除** | 多选删除历史日志文件（当日正在写入的文件不可删） |
 | **日志导出** | 打包导出为 `qvmconsole-logs-<时间戳>.zip` |
+
+:::info[请求日志脱敏]
+请求日志（`request.log`）记录请求路径、状态码、耗时、来源地址和已认证用户。当路径携带查询参数时，令牌（含 `token`）、密码（含 `password` / `passwd`）、密钥与 API Key（`key` / `api_key` / `apikey` / `_key` 后缀）、密钥材料（含 `secret`）、授权头与一次性验证码（`authorization` / `code`）等敏感参数的值会替换为 `[REDACTED]`；无法解析的查询串不写入日志，避免通过非法编码绕过脱敏。历史日志中已记录的敏感内容不会自动改写，发现泄露应及时轮换对应令牌或密钥。
+:::
 
 ## 诊断导出
 
