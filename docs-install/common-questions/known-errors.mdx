@@ -73,6 +73,17 @@ bash prepare-vfio-primary-gpu.sh --revert
 ```
 :::
 
+## 迁移虚拟机报错`Permissiondenied，pleasetryagain.`
+![](https://images.xiaozhuhouses.asia/i/2026/08/18/ljxywg.png)
+源宿主机不认可目标宿主机的 SSH 主机密钥，SSH 校验拦截连接；SSH 握手失败，对端直接断开连接，导致 KVM 热迁移数据流中断。
+本质：宿主机之间免密 SSH 信任未建立完整。
+
+解决方法：在被迁移的宿主机上执行
+```bash
+ssh root@目标宿主机IP
+```
+相当于连接一下迁移的主机 弹出 Are you sure you want to continue connecting (yes/no/[fingerprint])? → 主机密钥未录入 known_hosts，输入 yes 确认；然后再试一下
+
 ## 虚拟机内存使用率一直显示百分百
 这个其实是正常情况，当QVMC无法获取到虚拟机内部使用内存时，会降级到获取虚拟机占用真实物理机的内存大小，当系统处于刚启动或没有安装QEMU驱动的时候通常无法回收空闲内存那么虚拟机就会使用掉设置的全部物理机内存
 
