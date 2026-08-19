@@ -20,3 +20,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 dist
+
+# LLM 阅读通道生成物（构建/预览时自动生成，不入库）
+/static/llms.txt
+/static/llm/

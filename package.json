@@ -12,7 +12,8 @@
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:llm": "node --test plugins/llm-channel/__tests__/mdx-to-md.test.js plugins/llm-channel/__tests__/generate.test.js"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
@@ -31,7 +32,13 @@
     "@docusaurus/types": "3.10.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "typescript": "~7.0.2"
+    "remark-directive": "^4.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-mdx": "^3.1.1",
+    "remark-parse": "^11.0.0",
+    "remark-stringify": "^11.0.0",
+    "typescript": "~7.0.2",
+    "unified": "^11.0.5"
   },
   "browserslist": {
     "production": [

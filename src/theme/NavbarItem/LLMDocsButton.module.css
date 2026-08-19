@@ -1,0 +1,386 @@
+/* 大模型阅读通道导航按钮与使用介绍弹窗样式 */
+
+/* ---------- 导航栏按钮 ---------- */
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 8px;
+  color: var(--ifm-font-color-base);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.navButton:hover {
+  background: var(--ifm-color-emphasis-100);
+  color: var(--ifm-color-primary);
+}
+
+.navIcon {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+
+.navText {
+  white-space: nowrap;
+}
+
+@media (max-width: 996px) {
+  .navText {
+    display: none;
+  }
+}
+
+/* ---------- 弹窗容器 ---------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.dialog {
+  width: 100%;
+  max-width: 780px;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 20px 24px 16px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.24);
+  color: var(--ifm-font-color-base);
+  outline: none;
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.closeButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--ifm-color-emphasis-600);
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  background: var(--ifm-color-emphasis-100);
+  color: var(--ifm-color-emphasis-900);
+}
+
+.intro {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border-left: 3px solid var(--ifm-color-primary);
+  background: var(--ifm-color-emphasis-100);
+  color: var(--ifm-color-emphasis-800);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+/* ---------- 使用介绍图片区 ---------- */
+
+.figureGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 800px) {
+  .figureGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.figureCard {
+  margin: 0;
+  padding: 10px 8px 8px;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 10px;
+  background: var(--ifm-color-emphasis-0);
+}
+
+.figure {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.figureCaption {
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-800);
+}
+
+/* ---------- SVG 配色（跟随明暗模式） ---------- */
+
+.figPanel {
+  fill: var(--ifm-color-emphasis-100);
+  stroke: var(--ifm-color-emphasis-300);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+.figUrlBox,
+.figInputBox {
+  fill: var(--ifm-background-color);
+  stroke: var(--ifm-color-emphasis-400);
+  stroke-width: 1.5;
+}
+
+.figBubble {
+  fill: var(--ifm-color-emphasis-200);
+  stroke: var(--ifm-color-emphasis-300);
+  stroke-width: 1.2;
+}
+
+.figBubbleAlt {
+  fill: var(--ifm-color-primary-contrast-background);
+  stroke: var(--ifm-color-primary);
+  stroke-width: 1.2;
+}
+
+.figPrimaryFill {
+  fill: var(--ifm-color-primary);
+}
+
+.figIndexBox {
+  fill: var(--ifm-color-primary-contrast-background);
+  stroke: var(--ifm-color-primary);
+  stroke-width: 1.4;
+}
+
+.figArticleBox {
+  fill: var(--ifm-color-emphasis-100);
+  stroke: var(--ifm-color-emphasis-300);
+  stroke-width: 1.4;
+}
+
+.figAnswerBox {
+  fill: var(--ifm-color-success-contrast-background);
+  stroke: var(--ifm-color-success);
+  stroke-width: 1.4;
+}
+
+.figRobotHead {
+  fill: var(--ifm-color-emphasis-200);
+  stroke: var(--ifm-color-emphasis-1000);
+  stroke-width: 1.6;
+}
+
+.figRobotEye {
+  fill: var(--ifm-color-emphasis-800);
+}
+
+.figRobotMouth {
+  fill: var(--ifm-color-primary);
+}
+
+.figLine {
+  fill: none;
+  stroke: var(--ifm-color-emphasis-1000);
+  stroke-width: 1.6;
+}
+
+.figSendArrow {
+  color: var(--ifm-color-white);
+}
+
+.figText {
+  fill: var(--ifm-color-emphasis-700);
+}
+
+.figTextStrong {
+  fill: var(--ifm-color-emphasis-900);
+  font-weight: 600;
+}
+
+.figMono {
+  fill: var(--ifm-color-primary);
+  font-family: var(--ifm-font-family-monospace);
+}
+
+.figOnPrimary {
+  fill: var(--ifm-color-white);
+  font-weight: 600;
+}
+
+.figPlaceholder {
+  fill: var(--ifm-color-emphasis-1000);
+}
+
+/* ---------- 复制区 ---------- */
+
+.copyArea {
+  padding: 14px 16px;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 10px;
+  background: var(--ifm-color-emphasis-100);
+}
+
+.copyRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.copyLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-800);
+  flex: 1;
+}
+
+.copyHint {
+  font-size: 0.82rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.copyOk {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ifm-color-success);
+}
+
+.copyFail {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ifm-color-danger);
+}
+
+.addressBox {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ifm-color-emphasis-800);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.templateRow {
+  margin-top: 14px;
+}
+
+.templateBox {
+  flex: 1;
+  min-height: 60px;
+  padding: 8px 12px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ifm-color-emphasis-800);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+}
+
+.copyButton {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.footerNote {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+/* ---------- 推荐使用豆包 ---------- */
+
+.recommend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--ifm-color-primary);
+  border-radius: 10px;
+  background: var(--ifm-color-primary-contrast-background);
+}
+
+.recommendText {
+  flex: 1;
+  min-width: 220px;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.recommendText strong {
+  color: var(--ifm-color-primary);
+}
+
+.recommendBadge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--ifm-color-primary);
+  color: var(--ifm-color-white);
+  font-size: 0.75rem;
+  font-weight: 700;
+  vertical-align: 2px;
+}
+
+.recommendLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.recommendIcon {
+  display: inline-block;
+}
+
+/* 弹窗/输入框背景：显式写死不透明，避免浅色模式下主题变量解析异常导致整块透明 */
+.dialog,
+.addressBox,
+.templateBox {
+  background-color: #ffffff;
+}
+
+[data-theme='dark'] .dialog,
+[data-theme='dark'] .addressBox,
+[data-theme='dark'] .templateBox {
+  background-color: #242526;
+}

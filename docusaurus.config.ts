@@ -9,7 +9,7 @@ const config: Config = {
   tagline: '基于 KVM/QEMU 的轻量级虚拟机管理面板',
   favicon: 'img/favicon.ico',
 
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://qvmcdocs.xiaozhuhouses.asia',
   baseUrl: '/',
 
   organizationName: 'QVMConsole',
@@ -75,6 +75,21 @@ const config: Config = {
         searchResultContextMaxLength: 50,
       },
     ],
+    // 大模型阅读通道：构建/预览时自动生成 llms.txt 与 llm/*.md（详见 docs-install/site-guide/llm-access）
+    [
+      require.resolve('./plugins/llm-channel'),
+      {
+        instanceLabels: {
+          install: '安装与使用',
+          tech: '功能与原理',
+        },
+        includeHeadings: true,
+        maxHeadingsPerDoc: 20,
+        articleFooter: true,
+        // 生产域名；如需覆盖可用环境变量 LLM_DOCS_SITE_URL
+        siteUrl: process.env.LLM_DOCS_SITE_URL ?? 'https://qvmcdocs.xiaozhuhouses.asia',
+      },
+    ],
   ],
 
   themeConfig: {
@@ -98,6 +113,10 @@ const config: Config = {
           to: 'docs/tech/',
           label: '功能与原理',
           position: 'left',
+        },
+        {
+          type: 'custom-LLMDocsButton',
+          position: 'right',
         },
       ],
     },
