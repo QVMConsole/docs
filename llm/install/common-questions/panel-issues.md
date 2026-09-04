@@ -1,0 +1,34 @@
+# 面板问题
+
+## 升级后存在很多问题以及页面不匹配
+
+大部分情况下可能是浏览器缓存造成的，您可以按照以下操作清理浏览器缓存
+
+### 方法一：
+
+按`F12`然后找到下图中的并操作
+![](https://images.xiaozhuhouses.asia/i/2026/06/22/zozki2.png)
+然后不要关闭刷新页面之后再关闭F12菜单
+
+### 方法二：
+
+按`F12`然后找到下图中的并操作
+![](https://images.xiaozhuhouses.asia/i/2026/06/22/10e01q8.png)
+刷新页面即可
+
+## 【赞助版】绑定激活码报错403
+
+系统时间不对，请校准系统时间
+
+```bash
+# 查看当前时间
+date
+# 同步时间（如果偏差大）
+sudo ntpdate -u ntp.aliyun.com
+# 或
+sudo timedatectl set-ntp true
+```
+
+---
+
+> 原文路径：/docs/install/common-questions/panel-issues（本文由 QVMConsole 文档站自动生成，供大模型阅读）

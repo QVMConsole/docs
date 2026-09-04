@@ -1,0 +1,88 @@
+# 基础设施配置
+
+> **前置阅读** 首次接触虚拟机的用户，建议先阅读[虚拟化概述](/docs/tech/feature-analysis/virtualization-overview)。
+
+## 创建网络
+
+![网络创建界面](https://images.xiaozhuhouses.asia/i/2026/06/12/x77a96.png)
+
+QVMConsole 采用 OVS（Open vSwitch）交换机体系，架构类似 VMware ESXi。每个虚拟机的网卡必须接入一个交换机，而每个交换机需要对应一个上行链路（物理网口）。
+
+系统提供三种网络模式：
+
+### DHCP 模式（公有云或临时测试推荐）
+
+适用于虚拟机不需要从外部直接访问的场景。系统内部 DHCP 服务统一管理网络和分配 IP，若需从外部访问虚拟机，可使用[端口转发](/docs/tech/network/port-forward)功能。
+
+此模式适合对网络有隔离需求的环境以及公有 NAT 云场景。
+
+**配置步骤：**
+
+![NAT 模式配置](https://images.xiaozhuhouses.asia/i/2026/08/14/keq4hg.png)
+
+### 桥接模式（私有云或由上级网络统一管理推荐）
+
+桥接模式最适合私有云场景，将物理网口直接与虚拟机打通，由上级路由器统一管理。
+
+**配置步骤：**
+
+![创建交换机](https://images.xiaozhuhouses.asia/i/2026/08/14/khowt5.png)
+
+> 保持默认配置即可。如需了解网络配置的技术细节，请参阅 [VPC 交换机](/docs/tech/network/vpc-switch)。
+
+### 虚拟空交换机模式（开发或网络测试环境推荐）
+
+虚拟机空交换机就是创建一个虚拟机的交换机但是没有插任何网口。您可以自行发挥网络架构方案，例如使用爱快或openwrt组建一个虚拟机网络，由您这里面的软路由负责整个网络管理。
+
+**配置步骤：**
+
+![创建交换机](https://images.xiaozhuhouses.asia/i/2026/08/14/kk7wtp.png)
+
+## 创建存储池
+
+![存储池界面](https://images.xiaozhuhouses.asia/i/2026/06/12/x7no7u.png)
+
+QVMConsole 中每个卡片对应一个物理磁盘。您可以直接在物理磁盘上创建分区供虚拟机使用，也可以创建 LVM 存储池将多个物理磁盘合并为一个存储池。
+
+为防止误操作，默认仅显示可用磁盘。如需查看全部磁盘信息，请在右上角关闭"仅显示可用磁盘"选项。
+
+### 物理磁盘作为存储（新手推荐）
+
+此方式更贴近日常使用习惯，只需在界面中根据磁盘容量进行分区即可。
+
+![物理磁盘分区](https://images.xiaozhuhouses.asia/i/2026/06/12/xbcpz6.png)
+
+更多技术细节请参阅[存储池](/docs/tech/storage-pool/storage-pool-management)文档。
+
+### 多物理磁盘合并为 LVM 卷（适用于大容量存储灵活管理）
+
+若前期未做好硬盘规划，后续需要动态扩容，可使用此方式。
+
+> **注意** 开源版 Web 界面仅支持创建和删除操作，不支持高级管理功能。如需后续扩容等高阶操作，可升级为赞助版或请自行搜索教程使用命令行方式。
+
+![LVM 创建步骤一](https://images.xiaozhuhouses.asia/i/2026/06/12/xer2bh.png)
+
+![LVM 创建步骤二](https://images.xiaozhuhouses.asia/i/2026/06/12/xevvtx.png)
+
+## 配置 ISO 存放目录（可选）
+
+系统默认的 ISO 存储位置为 `/var/lib/libvirt`，该目录不适合通过 Web 界面直接上传文件。
+
+您可以按以下步骤修改：
+
+1. 开通[我的存储](https://images.xiaozhuhouses.asia/i/2026/06/12/xhbb1h.png)功能
+2. 在系统设置中修改 ISO 存储位置
+   ![修改 ISO 存储位置](https://images.xiaozhuhouses.asia/i/2026/06/12/xhxd6d.png)
+3. 在页面底部点击"保存设置"
+
+***
+
+## 使用逻辑
+
+QVMConsole 主打**模板化快速部署**，支持在分钟级别内完成虚拟机创建，体验类似阿里云 ECS 和 VMware ESXi。所以你可以不需要下载系统镜像的ISO。
+
+相比手动配置，我们更推荐您通过模板方式创建虚拟机，以最大程度避免系统差异因素造成的**安全问题**和**兼容问题**
+
+---
+
+> 原文路径：/docs/install/quick-start/infrastructure-config（本文由 QVMConsole 文档站自动生成，供大模型阅读）
