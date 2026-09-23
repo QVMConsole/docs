@@ -1,0 +1,243 @@
+# 部署
+
+本页面介绍 QVMConsole 的部署方法和系统要求。
+
+## 系统要求
+
+### 架构兼容
+
+| 架构                  | 说明                  |
+| ------------------- | ------------------- |
+| **x86\_64 / AMD64** | Intel 及 AMD 64 位处理器 |
+| **ARM64 / AArch64** | 64 位 ARM 处理器        |
+
+### 兼容系统
+
+| 发行版             | 版本            |
+| --------------- | ------------- |
+| Ubuntu          | 24.04/26.04   |
+| Debian          | Trixie        |
+| Kylin(社区兼容)     | V10/V11       |
+| openEuler(社区兼容) | 22.0.3/24.0.3 |
+
+> **重要提示**
+>
+> * 社区兼容的系统是由社区贡献者负责的，当前阶段可能兼容性达不到官方兼容的系统（Ubuntu Debian）不建议生产环境中使用。若使用中遇到问题可能无法及时处理。
+
+**内核版本要求**：Linux 6.12 - Linux 7.0.22
+
+若您不知道如何下载系统镜像（兼容的系统镜像文件夹），可以直接使用作者提供的系统镜像，以最大程度避免兼容或系统问题。
+
+* **123网盘**：[https://1852139552.share.123865.com/123pan/OAgIvd-fYoOH](https://1852139552.share.123865.com/123pan/OAgIvd-fYoOH)(官方)
+* **夸克网盘**：[https://pan.quark.cn/s/a5c1097063cd](https://pan.quark.cn/s/a5c1097063cd)(非官方)
+* **百度网盘**：[https://pan.baidu.com/s/1iEftpZkQgoCWTCS5PSSlXw?pwd=6f9y](https://pan.baidu.com/s/1iEftpZkQgoCWTCS5PSSlXw?pwd=6f9y)(非官方)
+* **天翼云盘**：[https://cloud.189.cn/t/imINNjJFRVZ3](https://cloud.189.cn/t/imINNjJFRVZ3)(非官方；访问码：oop1)
+* **迅雷云盘**：[https://pan.xunlei.com/s/VOvTNCA39Hj0BWQUDmyGp5g4A1?pwd=uevj#](https://pan.xunlei.com/s/VOvTNCA39Hj0BWQUDmyGp5g4A1?pwd=uevj#)(非官方)
+
+> **重要提示**
+>
+> * 兼容外的系统和内核存在问题不保证解决，需要自己有能力处理。
+> * Debian以及其它系统必须要把系统语言改成英语，否则会存在命令兼容问题
+
+### 系统环境要求
+
+> **纯净系统要求** **必须是纯净的系统环境**，可以与 Docker 共存，但**不要安装过其它涉及网络相关的软件包**。 \
+> **之前没有安装过NAS等相关高级特性软件**，若您之前安装过尽管卸载了，可能仍然会有配置残留没有恢复，导致在使用虚拟机的时候处处报错，若您对自己非常有信心的情况下可以继续安装，但出了问题必须要说明并且此类问题一般不保证解决。
+>
+> 萌新可以直接使用上面作者分享的镜像安装使用，避免存在功能冲突导致安装失败或运行异常。
+
+### 硬件要求
+
+推荐在**生产环境物理机**上直接部署，以获得最佳性能和兼容性。
+
+QVMConsole 服务资源占用极低，最低配置要求根据实际业务需求而定。以下是建议的最低配置：
+
+| 资源  | 最低配置      |
+| --- | --------- |
+| CPU | ≥2 核 2 线程 |
+| 内存  | ≥4 GB     |
+| 硬盘  | ≥50 GB    |
+
+## 准备环境
+
+在部署之前，必须将系统所有软件包和内核更新到最新版本：
+
+Debian/Ubuntu
+
+```bash
+sudo apt update && sudo apt full-upgrade
+# 重启确保新内核应用更改
+reboot
+```
+
+> 如果执行报错一般是源的问题，可以使用这个脚本一键换源 [linuxmirrors](https://linuxmirrors.cn/)
+
+> **更新提示**
+>
+> * 必须将系统所有软件包和内核更新到最新版本
+> * 如果更新过程存在问题，可能是软件包源的问题或者系统软件包损坏，请自行搜索教程解决后再进行部署
+
+## 部署方法
+
+请选择适合您使用场景的部署渠道。每个渠道仅展示对应的下载和安装方式。
+
+### 开源版
+
+**下载部署文件**
+
+### 加速CDN
+
+```bash
+wget -O install.sh https://download.xiaozhuhouses.asia/download/v1/links/dH9nYWU2S4szfAawearVGJgk26i94ODsx4JarLpY3v0
+```
+
+根据架构选择下载对应的程序包：
+
+### AMD64
+
+```bash
+wget -O kvm-console-linux-amd64.tar.gz https://download.xiaozhuhouses.asia/download/v1/links/YsxWkWgFPiZFrc8I0r2F8SpdLbhBA_O7PMnD0TDS0wM
+```
+
+### ARM64
+
+```bash
+wget -O kvm-console-linux-arm64.tar.gz https://download.xiaozhuhouses.asia/download/v1/links/SSr8OGj6KLbxHHKK746R_-CvpoFj1Skh9XIkjkNNzZ0
+```
+
+### GitHub Releases
+
+```bash
+wget -O install.sh https://raw.githubusercontent.com/QVMConsole/QVMConsole/main/install.sh
+```
+
+根据架构选择下载对应的程序包：
+
+### AMD64
+
+```bash
+wget -O kvm-console-linux-amd64.tar.gz https://github.com/QVMConsole/QVMConsole/releases/latest/download/kvm-console-linux-amd64.tar.gz
+```
+
+### ARM64
+
+```bash
+wget -O kvm-console-linux-arm64.tar.gz https://github.com/QVMConsole/QVMConsole/releases/latest/download/kvm-console-linux-arm64.tar.gz
+```
+
+**执行部署**
+
+```bash
+bash install.sh
+```
+
+> **注意事项** 部署期间脚本会自动处理依赖和网络等基础服务。请确保在**独立的会话环境**中运行部署命令，避免因中断造成部署失败。
+
+> **离线升级** 离线升级方式与安装相同，重新执行上面三个命令即可，安装脚本会自动识别进入更新模式。
+
+### 赞助版
+
+**下载部署文件**
+
+```bash
+wget -O install.sh https://download.xiaozhuhouses.asia/download/v1/links/4pptOkAQsdrl2CoWio-FtgZFOmhOOM9yOyB2eGV-qAk
+```
+
+根据架构选择下载对应的程序包：
+
+### AMD64
+
+```bash
+wget -O kvm-console-linux-amd64.tar.gz https://download.xiaozhuhouses.asia/download/v1/links/2XehhoggMhKBjNH3jcZe4HqZ96lNgb-jFnnW95oYzsQ
+```
+
+### ARM64
+
+```bash
+wget -O kvm-console-linux-arm64.tar.gz https://download.xiaozhuhouses.asia/download/v1/links/phDiYPttbt6DJNjdl6wdIaHwd8aT7jJOcG3Xzly11Sg
+```
+
+**执行部署**
+
+```bash
+bash install.sh
+```
+
+> **注意事项** 部署期间脚本会自动处理依赖和网络等基础服务。请确保在**独立的会话环境**中运行部署命令，避免因中断造成部署失败。
+
+> **离线升级** 离线升级方式与安装相同，重新执行上面三个命令即可，安装脚本会自动识别进入更新模式。
+
+### 飞牛 OS（Beta）
+
+为照顾到飞牛社区用户，为此作者推出飞牛FPK实现一键安装和全生命周期的管理。
+
+[fn-fpk仓库地址](https://github.com/QVMConsole/fn-fpk/)
+
+![](https://images.xiaozhuhouses.asia/i/2026/08/04/h4zp8z.png)
+
+> **注意事项** 飞牛OS虚拟机相关组件比较老，属于Debian12 **本身不在QVMConsole的兼容范围内**，作者通过打补丁的方式去强行兼容核心功能，这种方式可以在不修改QVMConsole源码的基础上单独为飞牛提供兼容，但是可能会相应的**修改飞牛系统的部分设置和植入相关处理服务**，可能会造成**飞牛部分服务（如系统升级）存在异常**和降低系统的**部分场景安全性**。作者已尽最大能力**避免产生更大影响**。**由此产生的相关影响与飞牛官方无关。**
+
+**下载 FPK 安装包**
+
+> **Beta 版本** 飞牛 OS 部署渠道当前处于 Beta 测试阶段，可能会存在不稳定因素以及一些功能无法正常使用和报错。若遇到问题时请前往[fn-fpk](https://github.com/QVMConsole/fn-fpk/)仓库提交issues。
+>
+> 目前仅支持x86架构
+
+> **信息** 若您飞牛中已经有虚拟机的可以无缝纳管。您可以选择同时保留飞牛官方的虚拟机应用，互不冲突。
+>
+> 安装面板过程中会自动向系统注入相关兼容补丁和服务，还会新增一个专属网卡用于QVMConsole的虚拟机，与你当前网卡不冲突。
+
+* **GitHub Releases**：[QVMConsole fn-fpk Releases](https://github.com/QVMConsole/fn-fpk/releases)
+* **国内 CDN 加速**：[下载 FPK 安装包](https://download.xiaozhuhouses.asia/download/v1/links/-26FQKeLtuc-Iwl1bEoXvd7nmDIet_bSCq8tIhTwojc)
+
+**安装教程**
+
+**1. 导入 FPK 安装包**
+
+![](https://images.xiaozhuhouses.asia/i/2026/08/04/gz2n22.png)
+
+**2. 安装面板**
+
+在 `安装与维护` 界面中安装面板即可
+
+**访问系统**
+
+部署完成后，使用以下方式访问：
+
+* **访问地址**：`http://你的服务器IP:设置的端口`
+* **默认账户**：`admin`
+* **默认密码**：`admin123`
+
+> **安全提示** 请务必登录后**第一时间修改默认密码**！默认密码仅用于初始登录，不修改存在严重安全风险。
+
+***
+
+> **使用协议** 使用本软件前请务必阅读并同意 [用户协议与内测须知](/agreement)。继续使用即表示您已了解相关风险并自愿承担相应责任。
+
+## 面板管理脚本
+
+支持 重置认证、修改端口等功能
+
+### 加速CDN
+
+```bash
+wget -O qvmc-manage.sh https://download.xiaozhuhouses.asia/download/v1/links/Y5_MDttkcrLh5unR9jviI0rqivkHHO5gxvsYsXPw6dI
+bash qvmc-manage.sh
+```
+
+### GitHub Releases
+
+```bash
+wget -O qvmc-manage.sh https://raw.githubusercontent.com/QVMConsole/QVMConsole/main/qvmc-manage.sh
+bash qvmc-manage.sh
+```
+
+## 交流与反馈
+
+如有问题或建议，欢迎加入我们的 QQ 群进行交流：
+
+[**QQ 群号：654641487**](https://qm.qq.com/q/se5S1y4sE0)
+
+---
+
+> 原文路径：/docs/install/（本文由 QVMConsole 文档站自动生成，供大模型阅读）

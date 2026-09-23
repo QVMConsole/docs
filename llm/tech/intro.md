@@ -1,0 +1,225 @@
+# QVMConsole 文档
+
+欢迎使用 QVMConsole 文档！
+
+**QVMConsole** 是一款基于 KVM/QEMU 的轻量级虚拟机管理面板，提供直观的 Web 界面来管理虚拟化基础设施。
+
+## 文档目录
+
+### 功能与架构
+
+本章节围绕 QVMConsole 的核心技术实现与架构设计展开，涵盖虚拟化原理、系统架构、数据流、安全机制等技术细节。适合以下人群阅读：
+
+* **开发者**：了解项目代码结构与技术实现，便于参与开发和贡献
+* **运维人员**：深入理解系统工作原理，优化部署和故障排查
+* **技术爱好者**：学习 KVM/QEMU 虚拟化技术与 Web 管理面板设计
+
+#### 章节内容
+
+* [虚拟化概述](/docs/tech/feature-analysis/virtualization-overview) - 虚拟化技术原理与 KVM/QEMU 架构
+* [QVMConsole 架构](/docs/tech/feature-analysis/qvmconsole-architecture) - 程序架构设计与技术实现详解
+* [虚拟机迁移](/docs/tech/feature-analysis/vm-migration) - 整机迁移、单硬盘迁移与热迁移/冷迁移机制详解
+
+### 虚拟机
+
+本章节深入介绍 QVMConsole 虚拟机管理的全部功能，从创建到运维的完整指南。涵盖创建方式、基础配置、硬件规格、存储配置、网络配置、系统配置、高级设置和硬件直通等内容。适合以下人群阅读：
+
+* **运维人员**：掌握虚拟机创建和管理的最佳实践
+* **开发者**：了解虚拟化技术的底层实现和调优方法
+* **系统管理员**：学习资源分配和性能优化策略
+* **技术爱好者**：探索 KVM/QEMU 虚拟化的高级特性
+
+#### 章节内容
+
+* [创建方式](/docs/tech/virtual-machine/creation-modes) - ISO 安装、模板克隆、磁盘导入与 OVF/OVA 导入等创建方式
+* [基础配置](/docs/tech/virtual-machine/basic-config) - 名称、备注、应用场景和操作系统配置
+* [硬件规格](/docs/tech/virtual-machine/hardware-spec) - CPU、内存、虚拟化引擎等硬件参数
+* [存储配置](/docs/tech/virtual-machine/storage-config) - 磁盘、ISO镜像、光驱软驱、存储池和IOPS限制
+* [网络配置](/docs/tech/virtual-machine/network-config) - 网卡、多网口、VPC网络、安全组和流量管控
+* [系统配置](/docs/tech/virtual-machine/system-config) - 引导顺序、开机自启和系统行为
+* [高级设置](/docs/tech/virtual-machine/advanced-settings) - 开发者选项和底层调优参数
+* [快照管理](/docs/tech/virtual-machine/snapshot-management) - 内部/外部快照、NVRAM 兼容与配额
+* [磁盘迁移与扩容](/docs/tech/virtual-machine/disk-migration-expansion) - 本机磁盘迁移与来宾分区扩容
+* [硬件直通](/docs/tech/virtual-machine/hardware-passthrough) - PCI设备直通和VFIO配置
+* [列表与运行管理](/docs/tech/virtual-machine/vm-list-operations) - 视图、电源操作、锁定、分组标签与详情页
+* [远程控制台（VNC / SPICE）](/docs/tech/virtual-machine/remote-console) - VNC WebSocket 控制台与 SPICE 直连
+* [导入与导出](/docs/tech/virtual-machine/import-export) - 虚拟机导出（qcow2/OVA）与 OVF/OVA 导入
+* [重装与救援](/docs/tech/virtual-machine/reinstall-rescue) - 重装系统、救援模式与来宾密码重置
+
+### 网络
+
+本章节全面介绍 QVMConsole 的网络管理功能，涵盖 OVS 基础网络、VPC 交换机、安全组策略、端口转发和 ACL 管理。适合以下人群阅读：
+
+* **运维人员**：掌握网络架构设计和流量管控策略
+* **网络管理员**：了解 VPC 隔离和安全组配置
+* **开发者**：理解 OVS 网桥和 nftables 规则生成机制
+
+#### 章节内容
+
+* [网络概览](/docs/tech/network/overview) - OVS 基础网络状态、网桥管理、接口配置与端口监控
+* [VPC 交换机](/docs/tech/network/vpc-switch) - NAT/物理直通/空交换机、配额、共享直通与桥接安全管理
+* [安全组策略](/docs/tech/network/security-group) - 安全组规则配置与 VPC 访问控制（支持 IPv6）
+* [端口转发](/docs/tech/network/port-forward) - 公网到虚拟机的流量转发规则管理
+* [ACL 管理](/docs/tech/network/acl) - VPC ACL nftables 规则的预览与应用
+* [端口安全](/docs/tech/network/port-security) - OVS 端口反欺骗与速率限制
+* [端口镜像](/docs/tech/network/port-mirror) - 基于 tc mirred 与 OVS FLOOD 的宿主机流量镜像
+
+### 公网 IP
+
+本章节介绍 QVMConsole 的公网 IP 管理功能，支持 1 NAT、经典网络-路由和经典网络-桥接三种模式，覆盖公网 IPv4 与路由型公网 IPv6，并提供来宾同步与批量操作。适合以下人群阅读：
+
+* **运维人员**：管理公网 IP 资源和绑定关系
+* **网络管理员**：理解 NAT、路由和桥接三种模式的差异
+* **系统管理员**：配置公网访问和浮动 IP 迁移
+
+#### 章节内容
+
+* [公网IP管理](/docs/tech/public-ip/public-ip-management) - 公网 IPv4/IPv6 的新增、绑定、解绑、迁移、来宾同步与批量操作
+
+### 防火墙
+
+本章节介绍 QVMConsole 的防火墙管理功能，涵盖宿主机防火墙、KVM 网络防火墙和连接管理。适合以下人群阅读：
+
+* **安全管理员**：配置和管理防火墙规则
+* **运维人员**：理解 UFW 和 nftables 双层防火墙架构
+* **系统管理员**：监控和清理 TCP 连接
+
+#### 章节内容
+
+* [宿主机防火墙](/docs/tech/firewall/host-firewall) - 基于 UFW 的宿主机入站端口规则管理
+* [KVM 网络防火墙](/docs/tech/firewall/kvm-firewall) - 基于 nftables 的虚拟机转发流量防火墙
+* [连接管理](/docs/tech/firewall/connection-mgmt) - TCP 连接的预览与清理
+
+### 存储池
+
+本章节介绍 QVMConsole 的存储池管理功能，涵盖物理磁盘管理、分区配置与默认存储位置设置。适合以下人群阅读：
+
+* **运维人员**：管理宿主机存储资源和虚拟机落盘策略
+* **系统管理员**：配置存储池和格式化挂载硬盘
+
+#### 章节内容
+
+* [存储池管理](/docs/tech/storage-pool/storage-pool-management) - 物理磁盘管理、分区配置与默认存储位置设置
+
+### 节点管理
+
+本章节介绍 QVMConsole 的多节点管理功能，涵盖节点接入、连通性探测与虚拟机迁移。适合以下人群阅读：
+
+* **运维人员**：管理多节点集群和虚拟机迁移
+* **系统管理员**：配置远程节点和监控节点状态
+
+#### 章节内容
+
+* [节点管理](/docs/tech/node-manage/node-management) - 多节点接入、连通性探测与虚拟机迁移
+
+### 我的存储
+
+本章节介绍 QVMConsole 的用户个人存储管理功能，涵盖 ISO 镜像、文件共享、虚拟磁盘与挂载管理。适合以下人群阅读：
+
+* **用户**：上传和管理个人文件，挂载到虚拟机
+* **运维人员**：了解 9p VirtFS 挂载机制
+
+#### 章节内容
+
+* [我的存储](/docs/tech/my-storage/my-storage-management) - ISO 镜像、文件共享、虚拟磁盘与挂载管理
+
+### 用户管理
+
+本章节介绍 QVMConsole 的用户管理功能，涵盖用户生命周期、配额管理与安全认证。适合以下人群阅读：
+
+* **管理员**：管理平台用户和资源配额
+* **安全管理员**：配置双因素认证和安全策略
+
+#### 章节内容
+
+* [用户管理](/docs/tech/user-manage/user-management) - 用户生命周期、配额管理与安全认证
+* [安全中心](/docs/tech/user-manage/security-center) - 邮箱绑定、两步验证、API 凭证、密码与用户名管理
+* [API 接口与安全调用](/docs/tech/user-manage/api-console-auth) - 接口文档中心、API Key 认证与高风险二次验证
+
+### 调度事件
+
+本章节介绍 QVMConsole 的调度事件功能，涵盖全局调度器监控、事件日志与 VM 定时任务。适合以下人群阅读：
+
+* **运维人员**：监控调度器运行状态和事件日志
+* **用户**：配置虚拟机定时开关机任务
+
+#### 章节内容
+
+* [调度事件](/docs/tech/scheduler/scheduler-events) - 全局调度器概览、事件日志与 VM 定时任务
+
+### 系统设置
+
+本章节介绍 QVMConsole 的系统设置功能，涵盖基础配置、存储网络、宿主机调优与安全维护。适合以下人群阅读：
+
+* **管理员**：配置平台全局参数和安全策略
+* **运维人员**：调优宿主机性能（KSM、zRAM、动态内存）
+
+#### 章节内容
+
+* [系统设置](/docs/tech/system-settings/) - 基础配置、存储网络、宿主机调优与安全维护
+
+### 使用文档
+
+详细的使用说明和配置指南：
+
+#### 虚拟机管理
+
+* 虚拟机创建与基础设施
+* 虚拟机迁移
+* 虚拟机快照
+* 虚拟机导入导出
+
+#### 网络管理
+
+* VPC 网络
+* OVS 网络
+* 端口转发
+* 公网 IP
+
+#### 存储管理
+
+* 存储池管理
+* 模板管理
+
+#### 用户与权限
+
+* 用户管理
+* API Key
+* 安全设置（2FA）
+
+#### 系统管理
+
+* 系统设置
+* 调度中心
+* 任务中心
+* 维护模式
+
+## 快速开始
+
+```bash
+# 安装脚本
+bash install.sh
+
+# 启动开发环境
+bash start-dev.sh
+```
+
+## 技术栈
+
+| 组件   | 技术                                                             |
+| ---- | -------------------------------------------------------------- |
+| 前端   | React 19 + Vite + Semi Design + Zustand + Axios + react-router |
+| 后端   | Go 1.26 (Gin) + go-libvirt (digitalocean/go-libvirt) + GORM    |
+| 数据库  | SQLite（GORM 自动迁移）                                              |
+| 虚拟化  | KVM/QEMU，通过 go-libvirt RPC 通信                                  |
+| 网络   | Open vSwitch (OVS) + Linux Bridge，nftables/iptables            |
+| 任务调度 | 自研任务队列（goroutine + 有界 channel + SSE 推送）                        |
+
+## 相关链接
+
+* [GitHub 仓库](https://github.com/your-org/QVMConsole)
+* [问题反馈](https://github.com/your-org/QVMConsole/issues)
+
+---
+
+> 原文路径：/docs/tech/（本文由 QVMConsole 文档站自动生成，供大模型阅读）

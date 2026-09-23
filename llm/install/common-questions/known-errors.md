@@ -1,0 +1,97 @@
+# 常见问题及报错
+
+## 无法载入AppArmor 侧写
+
+passt包与AppArmor 不兼容：通常是您的软件包和系统版本不匹配造成的AppArmor 底层返回的错误，请更换为与系统版本匹配的软件包源后重新执行更新所有软件包命令
+
+```bash
+sudo apt update && sudo apt upgrade
+```
+
+## 统信UOS ISO引导错误`Synchronous Exception`
+
+此问题一般是在Linux7内核的系统上由于UEFI固件较新与较老内核存在UEFI引导兼容问题。v0.1.4.5及以上可以在高级设置中启用`UEFI固件兼容模式`即可。
+
+同时可能还会伴随能引导后卡在正在加载内核的问题，可以同时开启`直接内核引导`
+
+> **注意** `直接内核引导`在安装完毕系统后需要关闭才可以正常进入系统
+
+## AMD核显直通43
+
+此问题因素较多，目前已知可能是AMD通病，可以参考国外大佬帖子有能力自己去尝试一下，作者测试了一个设备貌似不行。
+
+[Ryzen APU iGPU Passthrough (Renoir / Cezanne)](https://github.com/dmuiX/ryzen-apu-passthrough-guide)
+
+## 英伟达独显直通31
+
+属于是驱动加载错误，由于虚拟机自带了一个显示设备用于VNC画面显示，这可能会造成部分驱动版本驱动加载优先级问题，没有正确加载到显卡设备上。
+更新面板到最新版本 在v0.2.0.3版本中已进行了解决
+在`高级设置`中找到`显示设备`下拉框中选择`None`禁用虚拟显示器即可
+
+> **注意** 禁用虚拟显示器后您将无法使用VNC、SPICE，建议使用Windows远程桌面RDP或其它远程工具连接。必要时由于直通特性，您可以直接在显卡用线接到显示器上直接提供画面输出。同时直通对应的USB实现键鼠操作。
+
+## 英伟达独显直通43
+
+通常在解决31之后可能会出现43 43一般是驱动级别问题，可以重装驱动版本或降低更换驱动版本尝试，若仍然无效可以联系作者排查。
+
+## 直通后开机报错`group xx is not viable`
+
+当前 `iommu_group=xx` 这个分组里**不止你要直通的硬件，还有其他设备**；IOMMU 分组强制要求：**同一个分组内所有 PCI 硬件必须全部绑定 vfio 驱动**，不能只绑其中一个。
+
+解决办法就是，如果你是独显直通，独显一般还有音频设备需要一起给直通了，如果你是其它设备直通，需要将分组内的设备都一起直通了。
+
+> **信息** 判断分组就是看前面的 PCI地址 冒号左边是分组ID冒号右边是该分组下的设备ID。
+
+## 显卡直通出现拒绝操作
+
+字面意思，因为Linux默认需要一个显卡输出用于显示画面。当待直通的显示控制器仍被宿主机 `fb0` 使用时，QVMConsole 会拒绝绑定到 `vfio-pci`，避免宿主机显示崩溃。
+
+解决方法：使用此脚本[prepare-vfio-primary-gpu.sh](https://download.xiaozhuhouses.asia/download/v1/links/exBRjHs3e0bFioh-Mm8levoCUjcHQcLDkwIYhE-2HdA)
+
+> **信息** 脚本会让启动早期将该显示控制器绑定到 `vfio-pci`。此脚本适用于单独隔离在一个 IOMMU 组内的显示控制器。它不会修改 QVMConsole 数据库，也不会自动重启宿主机。
+
+在SSH中以root身份或加入sudo输入下面命令。注意看确认PCI地址
+
+```bash
+wget https://download.xiaozhuhouses.asia/download/v1/links/exBRjHs3e0bFioh-Mm8levoCUjcHQcLDkwIYhE-2HdA
+bash prepare-vfio-primary-gpu.sh --device 此处替换PCI地址 --check
+```
+
+![](https://images.xiaozhuhouses.asia/i/2026/08/05/gknapy.jpeg)
+脚本运行后如果没有报错，则开始执行迁移
+
+```bash
+bash prepare-vfio-primary-gpu.sh --device 此处替换PCI地址 --apply --confirm-host-console-loss
+```
+
+如果没有报错则执行`reboot`重启设备即可
+
+> **信息** 如需恢复可以执行
+>
+> ```bash
+> bash prepare-vfio-primary-gpu.sh --revert
+> ```
+
+## 迁移虚拟机报错`Permissiondenied，pleasetryagain.`
+
+![](https://images.xiaozhuhouses.asia/i/2026/08/18/ljxywg.png)
+源宿主机不认可目标宿主机的 SSH 主机密钥，SSH 校验拦截连接；SSH 握手失败，对端直接断开连接，导致 KVM 热迁移数据流中断。
+本质：宿主机之间免密 SSH 信任未建立完整。
+
+解决方法：在被迁移的宿主机上执行
+
+```bash
+ssh root@目标宿主机IP
+```
+
+相当于连接一下迁移的主机 弹出 Are you sure you want to continue connecting (yes/no/\[fingerprint])? → 主机密钥未录入 known\_hosts，输入 yes 确认；然后再试一下
+
+## 虚拟机内存使用率一直显示百分百
+
+这个其实是正常情况，当QVMC无法获取到虚拟机内部使用内存时，会降级到获取虚拟机占用真实物理机的内存大小，当系统处于刚启动或没有安装QEMU驱动的时候通常无法回收空闲内存那么虚拟机就会使用掉设置的全部物理机内存
+
+但是虚拟机显示的使用内存不代表占用物理机的大小，这主要是QEMU和内核的内存策略影响，Windows目前均无法做到回收内存，因为Windows系统默认会使用掉所有分配的内存（相当于占着茅坑不拉屎）所以通常只能使用KSM做内存合并，而Linux虚拟机就会把空闲内存上报给宿主机进行回收实现只占用已使用的内存（但是Linux的文件系统通常会把剩余内存用于读写缓存，您可能也能遇到像Windows那样，不过他的内存使用情况是根据读写平缓上升）
+
+---
+
+> 原文路径：/docs/install/common-questions/known-errors（本文由 QVMConsole 文档站自动生成，供大模型阅读）
