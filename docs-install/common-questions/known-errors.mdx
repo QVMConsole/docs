@@ -46,7 +46,7 @@ sudo apt update && sudo apt upgrade
 ## 显卡直通出现拒绝操作
 字面意思，因为Linux默认需要一个显卡输出用于显示画面。当待直通的显示控制器仍被宿主机 `fb0` 使用时，QVMConsole 会拒绝绑定到 `vfio-pci`，避免宿主机显示崩溃。
 
-解决方法：使用此脚本[prepare-vfio-primary-gpu.sh](https://download.xiaozhuhouses.asia/download/v1/links/exBRjHs3e0bFioh-Mm8levoCUjcHQcLDkwIYhE-2HdA) 
+解决方法：使用此脚本[prepare-vfio-primary-gpu.sh](https://download.xiaozhuhouses.asia/d/ac6a6d37eeca3387725f9df0bc55bb1e/prepare-vfio-primary-gpu.sh) 
 
 :::info
 脚本会让启动早期将该显示控制器绑定到 `vfio-pci`。此脚本适用于单独隔离在一个 IOMMU 组内的显示控制器。它不会修改 QVMConsole 数据库，也不会自动重启宿主机。
@@ -56,7 +56,7 @@ sudo apt update && sudo apt upgrade
 
 
 ```bash
-wget https://download.xiaozhuhouses.asia/download/v1/links/exBRjHs3e0bFioh-Mm8levoCUjcHQcLDkwIYhE-2HdA
+wget https://download.xiaozhuhouses.asia/d/ac6a6d37eeca3387725f9df0bc55bb1e/prepare-vfio-primary-gpu.sh
 bash prepare-vfio-primary-gpu.sh --device 此处替换PCI地址 --check
 ```
 ![](https://images.xiaozhuhouses.asia/i/2026/08/05/gknapy.jpeg)
