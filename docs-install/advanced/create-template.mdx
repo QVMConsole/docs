@@ -67,7 +67,7 @@ QVMConsole 的模板制作本质上是将虚拟机的磁盘文件进行稀疏复
 1. 先选择系统 ISO 镜像
 2. 然后选择 virtio 驱动 ISO
 
-![选择安装镜像](https://images.xiaozhuhouses.asia/i/2026/06/15/116l1jw.png)
+![选择安装镜像](https://images-web.cn-nb1.rains3.com/QVMConsole/116l1jw.png)
 
 :::tip 性能优化
 将磁盘类型和网卡都设置为 **virtio 半虚拟化**，可以获得接近物理机的性能表现。\
@@ -104,7 +104,7 @@ Windows7网卡选择e1000。Windows更低版本由于没有驱动支持，全部
 
 ![virtio 驱动安装](https://help-static.fnnas.com/images/20241230144945826.png)
 
-![驱动安装确认](https://images.xiaozhuhouses.asia/i/2026/06/12/zcjqec.png)
+![驱动安装确认](https://images-web.cn-nb1.rains3.com/QVMConsole/zcjqec.png)
 
 安装过程中一直点击"下一步"即可完成。
 
@@ -129,7 +129,7 @@ CloudbaseInit 是用于云环境初始化的工具，能够自动配置主机名
 3. 将 CloudbaseInit 安装文件复制到桌面
 4. 双击运行安装程序
 
-![CloudbaseInit 安装](https://images.xiaozhuhouses.asia/i/2026/06/15/st7bv5.png)
+![CloudbaseInit 安装](https://images-web.cn-nb1.rains3.com/QVMConsole/st7bv5.png)
 
 :::warning 注意
 安装到最后一步的两个选项**不要勾选**，直接点击关闭即可。
@@ -143,14 +143,14 @@ CloudbaseInit 是用于云环境初始化的工具，能够自动配置主机名
 2. 在打开的目录中双击可执行文件
 3. 按照下图选择配置：
 
-![Sysprep 配置](https://images.xiaozhuhouses.asia/i/2026/06/15/qjoqhe.png)
+![Sysprep 配置](https://images-web.cn-nb1.rains3.com/QVMConsole/qjoqhe.png)
 
 4. 确认系统环境无误后，点击"确定"开始封装
 
 :::danger Windows 11 用户注意
 Windows 11 默认启用了磁盘加密（BitLocker），**必须先关闭磁盘加密**后再进行模板制作，否则Sysprep会失败。
 
-![关闭磁盘加密](https://images.xiaozhuhouses.asia/i/2026/06/15/qnr1d7.png)
+![关闭磁盘加密](https://images-web.cn-nb1.rains3.com/QVMConsole/qnr1d7.png)
 :::
 
 ### 9. 制作模板
@@ -164,7 +164,7 @@ Windows 11 默认启用了磁盘加密（BitLocker），**必须先关闭磁盘�
 5. 选择磁盘处理方式（见下方说明）
 6. 点击确定完成制作
 
-![制作模板](https://images.xiaozhuhouses.asia/i/2026/06/13/h5h5l7.png)
+![制作模板](https://images-web.cn-nb1.rains3.com/QVMConsole/h5h5l7.png)
 
 #### 磁盘处理方式
 
@@ -216,7 +216,7 @@ dnf install -y cloud-init cloud-utils-growpart
 
 最后直接关机，制作模板即可
 
-![制作 Linux 模板](https://images.xiaozhuhouses.asia/i/2026/06/13/h5h5l7.png)
+![制作 Linux 模板](https://images-web.cn-nb1.rains3.com/QVMConsole/h5h5l7.png)
 
 :::tip Linux 模板优势
 - 制作速度快，无需复杂的封装步骤

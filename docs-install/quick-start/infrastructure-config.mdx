@@ -12,7 +12,7 @@ description: QVMConsole 基础设施配置指南
 
 ## 创建网络
 
-![网络创建界面](https://images.xiaozhuhouses.asia/i/2026/06/12/x77a96.png)
+![网络创建界面](https://images-web.cn-nb1.rains3.com/QVMConsole/x77a96.png)
 
 QVMConsole 采用 OVS（Open vSwitch）交换机体系，架构类似 VMware ESXi。每个虚拟机的网卡必须接入一个交换机，而每个交换机需要对应一个上行链路（物理网口）。
 
@@ -28,7 +28,7 @@ QVMConsole 采用 OVS（Open vSwitch）交换机体系，架构类似 VMware ESX
 
 **配置步骤：**
 
-![NAT 模式配置](https://images.xiaozhuhouses.asia/i/2026/08/14/keq4hg.png)
+![NAT 模式配置](https://images-web.cn-nb1.rains3.com/QVMConsole/keq4hg.png)
 
 ### 桥接模式（私有云或由上级网络统一管理推荐）
 
@@ -38,7 +38,7 @@ QVMConsole 采用 OVS（Open vSwitch）交换机体系，架构类似 VMware ESX
 
 **配置步骤：**
 
-![创建交换机](https://images.xiaozhuhouses.asia/i/2026/08/14/khowt5.png)
+![创建交换机](https://images-web.cn-nb1.rains3.com/QVMConsole/khowt5.png)
 
 > 保持默认配置即可。如需了解网络配置的技术细节，请参阅 [VPC 交换机](/docs/tech/network/vpc-switch)。
 
@@ -48,12 +48,12 @@ QVMConsole 采用 OVS（Open vSwitch）交换机体系，架构类似 VMware ESX
 
 **配置步骤：**
 
-![创建交换机](https://images.xiaozhuhouses.asia/i/2026/08/14/kk7wtp.png)
+![创建交换机](https://images-web.cn-nb1.rains3.com/QVMConsole/kk7wtp.png)
 
 
 ## 创建存储池
 
-![存储池界面](https://images.xiaozhuhouses.asia/i/2026/06/12/x7no7u.png)
+![存储池界面](https://images-web.cn-nb1.rains3.com/QVMConsole/x7no7u.png)
 
 QVMConsole 中每个卡片对应一个物理磁盘。您可以直接在物理磁盘上创建分区供虚拟机使用，也可以创建 LVM 存储池将多个物理磁盘合并为一个存储池。
 
@@ -63,7 +63,7 @@ QVMConsole 中每个卡片对应一个物理磁盘。您可以直接在物理磁
 
 此方式更贴近日常使用习惯，只需在界面中根据磁盘容量进行分区即可。
 
-![物理磁盘分区](https://images.xiaozhuhouses.asia/i/2026/06/12/xbcpz6.png)
+![物理磁盘分区](https://images-web.cn-nb1.rains3.com/QVMConsole/xbcpz6.png)
 
 更多技术细节请参阅[存储池](/docs/tech/storage-pool/storage-pool-management)文档。
 
@@ -75,9 +75,9 @@ QVMConsole 中每个卡片对应一个物理磁盘。您可以直接在物理磁
 开源版 Web 界面仅支持创建和删除操作，不支持高级管理功能。如需后续扩容等高阶操作，可升级为赞助版或请自行搜索教程使用命令行方式。
 :::
 
-![LVM 创建步骤一](https://images.xiaozhuhouses.asia/i/2026/06/12/xer2bh.png)
+![LVM 创建步骤一](https://images-web.cn-nb1.rains3.com/QVMConsole/xer2bh.png)
 
-![LVM 创建步骤二](https://images.xiaozhuhouses.asia/i/2026/06/12/xevvtx.png)
+![LVM 创建步骤二](https://images-web.cn-nb1.rains3.com/QVMConsole/xevvtx.png)
 
 ## 配置 ISO 存放目录（可选）
 
@@ -85,9 +85,9 @@ QVMConsole 中每个卡片对应一个物理磁盘。您可以直接在物理磁
 
 您可以按以下步骤修改：
 
-1. 开通[我的存储](https://images.xiaozhuhouses.asia/i/2026/06/12/xhbb1h.png)功能
+1. 开通[我的存储](https://images-web.cn-nb1.rains3.com/QVMConsole/xhbb1h.png)功能
 2. 在系统设置中修改 ISO 存储位置
-   ![修改 ISO 存储位置](https://images.xiaozhuhouses.asia/i/2026/06/12/xhxd6d.png)
+   ![修改 ISO 存储位置](https://images-web.cn-nb1.rains3.com/QVMConsole/xhxd6d.png)
 3. 在页面底部点击"保存设置"
 
 ---
