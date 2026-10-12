@@ -233,10 +233,39 @@ function normalizePosix(p) {
 }
 
 /**
- * 主入口：读取文档、转换、写出全部产物。
- * @param {{siteDir:string, allContent:object, options?:object}} args
+ * 按站点 trailingSlash 配置规范化文档地址。
+ *
+ * Docusaurus 在 allContentLoaded 阶段给出的 doc.permalink 是**原始形态**，
+ * 尾斜杠要到更晚的路由创建阶段才补齐。若不在这里对齐，
+ * 大模型阅读通道记录的原文路径会与站点实际地址不一致（多一次跳转）。
+ *
+ * @param {string} permalink 文档地址
+ * @param {boolean|undefined} trailingSlash 站点的 trailingSlash 配置
+ * @returns {string} 规范化后的地址
  */
-async function generate({ siteDir, allContent, options }) {
+function normalizePermalink(permalink, trailingSlash) {
+  if (typeof permalink !== 'string' || permalink === '' || permalink === '/') {
+    return permalink;
+  }
+  if (typeof trailingSlash !== 'boolean') {
+    return permalink; // 未显式配置时保持原样
+  }
+  const suffixIndex = permalink.search(/[?#]/);
+  const pathname = suffixIndex === -1 ? permalink : permalink.slice(0, suffixIndex);
+  const suffix = suffixIndex === -1 ? '' : permalink.slice(suffixIndex);
+  const trimmed = pathname.replace(/\/+$/, '');
+  const lastSegment = trimmed.slice(trimmed.lastIndexOf('/') + 1);
+  if (lastSegment.includes('.')) {
+    return permalink; // 静态文件不处理，避免破坏访问
+  }
+  return `${trimmed}${trailingSlash ? '/' : ''}${suffix}`;
+}
+
+/**
+ * 主入口：读取文档、转换、写出全部产物。
+ * @param {{siteDir:string, allContent:object, options?:object, trailingSlash?:boolean}} args
+ */
+async function generate({ siteDir, allContent, options, trailingSlash }) {
   const opts = normalizeOptions(options);
   const items = collectDocs(allContent);
   const llmRoot = path.join(siteDir, 'static', 'llm');
@@ -252,7 +281,7 @@ async function generate({ siteDir, allContent, options }) {
       const raw = await fs.readFile(sourcePath, 'utf8');
       md = await mdxToMarkdown(raw, {
         title: doc.title || undefined,
-        permalink: doc.permalink,
+        permalink: normalizePermalink(doc.permalink, trailingSlash),
         footer: opts.articleFooter,
       });
     } catch (err) {
@@ -274,7 +303,7 @@ async function generate({ siteDir, allContent, options }) {
       description: doc.description || excerptFromMarkdown(md),
       keywords: normalizeKeywords(frontMatter),
       href: articleHref(opts, relPath),
-      pagePath: doc.permalink,
+      pagePath: normalizePermalink(doc.permalink, trailingSlash),
       headings: opts.includeHeadings ? extractHeadings(md, opts.maxHeadingsPerDoc) : [],
       sidebarPosition:
         typeof doc.sidebarPosition === 'number' ? doc.sidebarPosition : Number.MAX_SAFE_INTEGER,
@@ -304,4 +333,5 @@ module.exports = {
   buildCatalogText,
   buildIndexJson,
   normalizeOptions,
+  normalizePermalink,
 };

@@ -16,7 +16,13 @@ module.exports = function llmChannelPlugin(context, options) {
     name: 'llm-channel',
     async allContentLoaded({ allContent }) {
       try {
-        await generate({ siteDir: context.siteDir, allContent, options });
+        await generate({
+          siteDir: context.siteDir,
+          allContent,
+          options,
+          // 站点地址规范（trailingSlash）需要传给生成器，保证记录的原文路径与路由一致
+          trailingSlash: context.siteConfig && context.siteConfig.trailingSlash,
+        });
         console.log('[llm-channel] 大模型阅读文件已生成（llms.txt / llm/**/*.md）');
       } catch (err) {
         // 生成失败不阻断站点构建，但需要醒目提示

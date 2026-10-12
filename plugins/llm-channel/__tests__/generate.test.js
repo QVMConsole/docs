@@ -13,6 +13,7 @@ const {
   buildIndexJson,
   extractHeadings,
   excerptFromMarkdown,
+  normalizePermalink,
 } = require('../generate');
 
 function fakeAllContent() {
@@ -247,6 +248,68 @@ test('generate 端到端：输出 llms.txt / llm/*.md / index.json 且不误删 
     );
     const catalog = fs.readFileSync(path.join(siteDir, 'static', 'llms.txt'), 'utf8');
     assert.ok(catalog.includes('- [你好](/llm/tech/hello.md)'), '目录应包含文章条目');
+  } finally {
+    fs.rmSync(siteDir, {recursive: true, force: true});
+  }
+});
+
+test('normalizePermalink 按站点 trailingSlash 配置对齐地址', () => {
+  assert.equal(normalizePermalink('/docs/tech/hello', true), '/docs/tech/hello/');
+  assert.equal(normalizePermalink('/docs/tech/hello/', true), '/docs/tech/hello/');
+  assert.equal(normalizePermalink('/docs/tech/hello/', false), '/docs/tech/hello');
+  assert.equal(normalizePermalink('/docs/tech/hello', false), '/docs/tech/hello');
+  assert.equal(normalizePermalink('/docs/tech/hello', undefined), '/docs/tech/hello');
+  assert.equal(normalizePermalink('/', true), '/', '首页不需要处理');
+  assert.equal(normalizePermalink('/llms.txt', true), '/llms.txt', '静态文件不补斜杠');
+  assert.equal(normalizePermalink('/docs/tech/hello?x=1#top', true), '/docs/tech/hello/?x=1#top');
+});
+
+test('generate 端到端：开启 trailingSlash 后原文路径与 pagePath 带尾斜杠', async () => {
+  const siteDir = fs.mkdtempSync(path.join(os.tmpdir(), 'llm-slash-'));
+  try {
+    fs.mkdirSync(path.join(siteDir, 'docs-xyz'), {recursive: true});
+    fs.writeFileSync(
+      path.join(siteDir, 'docs-xyz', 'hello.mdx'),
+      '---\ntitle: 你好\n---\n# 你好\n\n正文内容。\n',
+    );
+    const allContent = {
+      'docusaurus-plugin-content-docs': {
+        tech: {
+          loadedVersions: [
+            {
+              versionName: 'current',
+              docs: [
+                {
+                  id: 'hello',
+                  title: '你好',
+                  description: '一段简介',
+                  permalink: '/docs/tech/hello',
+                  source: '@site/docs-xyz/hello.mdx',
+                  frontMatter: {},
+                  sidebarPosition: 1,
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    await generate({
+      siteDir,
+      allContent,
+      options: {instanceLabels: {tech: '功能与原理'}},
+      trailingSlash: true,
+    });
+    const article = fs.readFileSync(
+      path.join(siteDir, 'static', 'llm', 'tech', 'hello.md'),
+      'utf8',
+    );
+    assert.ok(
+      article.includes('> 原文路径：/docs/tech/hello/'),
+      '正文记录的原文路径应带尾斜杠',
+    );
+    const indexJson = fs.readFileSync(path.join(siteDir, 'static', 'llm', 'index.json'), 'utf8');
+    assert.ok(indexJson.includes('"/docs/tech/hello/"'), 'index.json 的 pagePath 应带尾斜杠');
   } finally {
     fs.rmSync(siteDir, {recursive: true, force: true});
   }

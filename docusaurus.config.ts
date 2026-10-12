@@ -12,6 +12,10 @@ const config: Config = {
   url: 'https://qvmcdocs.xiaozhuhouses.asia',
   baseUrl: '/',
 
+  // 必须显式声明：静态托管（腾讯 EdgeOne Makers）只对「以 / 结尾」的地址补 index.html，
+  // 无尾斜杠的目录地址会直接判定为找不到页面，导致直接访问或刷新文档页失败。
+  trailingSlash: true,
+
   organizationName: 'QVMConsole',
   projectName: 'QVMConsole',
 

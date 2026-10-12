@@ -3,6 +3,7 @@
   "position": 13,
   "link": {
     "type": "generated-index",
+    "slug": "/category/system-settings",
     "description": "深入了解 QVMConsole 系统设置的全部功能，涵盖基础配置、存储网络、宿主机调优与安全维护"
   }
 }

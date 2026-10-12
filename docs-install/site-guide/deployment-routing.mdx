@@ -1,0 +1,160 @@
+---
+sidebar_position: 3
+title: 部署与地址规范
+description: 文档站的页面地址形态必须与静态托管平台一致，否则会出现「站内点击正常、刷新或直接访问报错」的问题
+---
+
+# 部署与地址规范
+
+文档站是纯静态站点，**页面地址（URL）的形态必须与托管平台的解析行为一致**。本站部署在腾讯 EdgeOne Makers（Pages），其边缘路由与常见的本地预览服务器存在差异，因此对地址形态有明确约定。
+
+## 为什么会出现「刷新就报错」
+
+平台侧的实测结果（同一份构建产物）：
+
+| 请求形态 | 平台行为 | 实测 |
+| --- | --- | --- |
+| 路径命中静态文件（如 `/llms.txt`、`/img/logo.svg`） | 直接返回文件 | 200 |
+| 目录地址，**以 `/` 结尾** | 自动补 `index.html` | 200 |
+| 目录地址，**不带 `/`** | 不补斜杠，直接判为找不到页面 | 错误页（文案写着 404，实际 HTTP 状态是 **403**） |
+| 完全不存在的路径 | 返回站点自带的 `404.html` | 404 |
+
+关键点在于**第三行**：常见的静态服务器（`docusaurus start`、`docusaurus serve`、Nginx、GitHub Pages 等）遇到「存在同名目录但地址没带斜杠」时，会补一个 `index.html` 或 301 跳到带斜杠的地址；而 EdgeOne Makers 的边缘路由**缺少这一步**，直接判定页面不存在。
+
+于是形成两个看起来矛盾的现象：
+
+- **站内点击正常**：链接由 React Router 在浏览器内完成跳转，**不会向服务器发请求**，所以不触发平台的解析差异。
+- **刷新或从外部直达报错**：此时是浏览器对平台发起的真实请求，地址栏里的无斜杠地址被平台判为不存在。
+
+## 地址规范
+
+本站已在 `docusaurus.config.ts` 中显式声明：
+
+```ts
+trailingSlash: true,
+```
+
+该配置带来的效果：
+
+| 项目 | 结果 |
+| --- | --- |
+| 页面地址 | 统一以 `/` 结尾，如 `/docs/install/quick-start/infrastructure-config/` |
+| 构建产物结构 | 不变，仍是 `<路径>/index.html` |
+| 自定义 404 页 | 不受影响，`404.html` 不会被改写（Docusaurus 对 `.html` 结尾的路径不做处理） |
+| 站内链接、canonical、`sitemap.xml`、搜索索引、`llms.txt` | 全部跟随为带尾斜杠的地址 |
+
+:::warning 不要随意改回无尾斜杠
+若把 `trailingSlash` 改回默认（不声明），构建出的地址又会变成无尾斜杠形态，文档页将再次出现刷新报错。若将来更换托管平台（GitHub Pages、Cloudflare Pages、Netlify、对象存储静态网站等均支持补斜杠），也建议保持显式声明的写法。
+:::
+
+## 旧地址兜底：edgeone.json
+
+已经被搜索引擎收录、已经分享出去的历史地址是不带尾斜杠的旧形态，需要通过 301 兜底。本站由脚本自动生成该配置，**不需要手工维护**：
+
+```text
+pnpm build
+  ├─ docusaurus build        生成 build/ 静态产物与 sitemap.xml
+  └─ node scripts/gen-edgeone-json.js
+                             读取 build/sitemap.xml，生成 build/edgeone.json
+```
+
+生成的 `build/edgeone.json` 形如：
+
+```json
+{
+  "redirects": [
+    {
+      "source": "/docs/install/quick-start/infrastructure-config",
+      "destination": "/docs/install/quick-start/infrastructure-config/",
+      "statusCode": 301
+    }
+  ]
+}
+```
+
+规则说明：
+
+- 数据来源是 `sitemap.xml`，**新增文档后重新构建即可，不需要改脚本**。
+- 带扩展名的静态文件（`llms.txt`、`sitemap.xml`、`llm/*.md` 等）不补斜杠，避免破坏访问。
+- 中文地址保持百分号编码，不做解码。
+- 平台限制 `redirects` 最多 **100 条**；超出时脚本会打印告警，并按「路径越短越靠前」保留，其余丢弃。
+
+### 配置文件放在哪里
+
+| 部署方式 | `edgeone.json` 位置 | 做法 |
+| --- | --- | --- |
+| 控制台直接上传（`build/` 或 `build.ps1` 产出的 `dist/`） | 上传内容的根目录 | 构建脚本已自动生成，随产物一起上传即可 |
+| 导入 Git 仓库由平台构建 | 仓库根目录 | 执行 `node scripts/gen-edgeone-json.js --with-root` 生成根目录副本并提交 |
+
+:::tip 实测结论：放在构建输出目录即可生效
+本项目按当前部署方式实测：`edgeone.json` 只放在构建输出目录（`build/`）时，无尾斜杠的旧地址已经正确 301 到带尾斜杠的新地址；而**不存在**的地址（`/nope-xyz`、`/docs`、`/img` 等）仍然返回 404。后者说明平台上并没有「通用补斜杠」规则，跳转确实来自这份配置，而不是平台自带行为。
+
+只有当你的部署方式读不到输出目录中的配置时，才需要补一份仓库根目录副本。
+:::
+
+## 自查方法
+
+部署后用下面这段命令核对全站地址（需要 PowerShell）：
+
+```powershell
+$sm = (Invoke-WebRequest 'https://qvmcdocs.xiaozhuhouses.asia/sitemap.xml').Content
+$locs = [regex]::Matches($sm, '<loc>([^<]+)</loc>') | ForEach-Object { $_.Groups[1].Value }
+$locs | ForEach-Object {
+  $code = (Invoke-WebRequest $_ -MaximumRedirection 0 -SkipHttpErrorCheck).StatusCode
+  "{0,-4} {1}" -f $code, $_
+}
+```
+
+判定标准：**带尾斜杠的地址应全部为 200**；个别地址返回 403 / 404 时需要单独排查（见下节）。
+
+:::tip 边缘缓存
+平台在每次新部署后会自动失效边缘缓存。若刚改完配置仍看到旧结果，先确认部署已经生效，并在请求地址后附加一个随机参数（如 `?v=1`）绕过缓存再看。
+:::
+
+## 平台限制：路径不能含中文（已处理）
+
+平台的边缘路由**无法服务路径中含非 ASCII 字符的地址**。重新部署后该现象依旧稳定复现，因此可以排除「上传环节丢了文件名」：
+
+| 地址 | 本地预览 | 线上 |
+| --- | --- | --- |
+| 存在的中文分类页 `/docs/tech/category/网络/` | 200 | **403**（平台 NOT_FOUND 错误页） |
+| 存在的中文分类页，显式请求 `index.html` | 200 | **403** |
+| **不存在**的中文分类页 `/docs/tech/category/不存在的分类/` | 404 | 404（站点自定义 404 页） |
+| 不存在的英文地址 `/nope-xyz/` | 404 | 404（站点自定义 404 页） |
+
+关键对照在第三行：平台对**不存在的中文路径**正常返回 404，只对**确实存在的中文资源**返回 403。这说明文件已经部署上去、平台也能匹配到对应路由，但在读取这一步失败。再结合「百分号编码本身正常」（`/docs/%74ech/workbench/` 可正常访问），可以排除编码写法问题。
+
+后果：这类页面在站内点击可以正常浏览（客户端路由不发服务器请求），但**外部直达、搜索引擎进入、刷新都会失败**。当时受影响的是全部分类落地页（18 个）与 `security/内核漏洞/` 下的漏洞公告，现已按下节方式处理。
+
+### 处理方式（已实施）
+
+把**地址**改成 ASCII、**界面文字**保持中文，并加上构建期自检防止回归：
+
+| 对象 | 做法 | 结果 |
+| --- | --- | --- |
+| 18 个分类落地页 | 在 `_category_.json` 的 `link` 中补 `"slug": "/category/<英文名>"`（复用已有的英文目录名） | 地址如 `/docs/tech/category/network`，侧边栏仍显示「网络」 |
+| 含中文的文档目录 | `docs-install/security/内核漏洞/` → `kernel-vulnerability/`，`面板漏洞/` → `panel-vulnerability/` | 文档地址与 `/llm/**/*.md` 地址一并变为 ASCII |
+| 构建期自检 | `scripts/check-output-paths.js` 在每次构建后扫描产物路径 | 一旦再出现非 ASCII 路径，会列出并给出修复指引（加 `--strict` 可改为阻断构建） |
+
+验证结果：构建产物中含非 ASCII 的路径 **0 个**；`sitemap.xml` 的 75 条地址全部为 ASCII；分类页与文档页的标题、侧边栏显示名仍为中文。
+
+:::note 中文标题与中文地址是两件事
+地址（URL）只用于定位资源。**页面标题、侧边栏名称、正文全部保持中文**；把地址改成英文后，链接可以正常复制、分享和被搜索引擎抓取，而读者看到的界面没有任何变化。
+:::
+
+中文路由的两个来源（新增分类或文档时注意）：
+
+- 分类落地页：`_category_.json` 里的 `generated-index` 未指定 `slug` 时，路由默认取**中文 label**。
+- 文档路径：文档所在目录名如果是中文，文档 id 与 `/llm/*.md` 地址都会带中文。
+
+## 涉及文件
+
+| 文件 | 作用 |
+| --- | --- |
+| `docusaurus.config.ts` | `trailingSlash: true` 的声明位置 |
+| `scripts/gen-edgeone-json.js` | 依据 sitemap 生成 `edgeone.json` 的 301 规则 |
+| `scripts/check-output-paths.js` | 构建后自检产物中是否出现非 ASCII 路径 |
+| `scripts/__tests__/` | 两个脚本的局部单测（`pnpm test:scripts`） |
+| 各目录下的 `_category_.json` | 分类落地页的 `link.slug`，决定分类页地址 |
+| `package.json` | `build` 脚本串联生成与自检 |
+| `build.ps1` | 本地打包，产物输出到 `dist/` |

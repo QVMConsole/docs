@@ -3,6 +3,7 @@
   "position": 7,
   "link": {
     "type": "generated-index",
+    "slug": "/category/firewall",
     "description": "深入了解 QVMConsole 防火墙管理的全部功能，涵盖宿主机防火墙、KVM 网络防火墙与连接管理"
   }
 }

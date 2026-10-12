@@ -5,7 +5,7 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
-    "build": "docusaurus build",
+    "build": "docusaurus build && node scripts/gen-edgeone-json.js && node scripts/check-output-paths.js",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
@@ -13,7 +13,8 @@
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc",
-    "test:llm": "node --test plugins/llm-channel/__tests__/mdx-to-md.test.js plugins/llm-channel/__tests__/generate.test.js"
+    "test:llm": "node --test plugins/llm-channel/__tests__/mdx-to-md.test.js plugins/llm-channel/__tests__/generate.test.js",
+    "test:scripts": "node --test scripts/__tests__/gen-edgeone-json.test.js scripts/__tests__/check-output-paths.test.js"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
