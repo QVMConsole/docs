@@ -1,0 +1,374 @@
+{
+  "redirects": [
+    {
+      "source": "/search",
+      "destination": "/search/",
+      "statusCode": 301
+    },
+    {
+      "source": "/agreement",
+      "destination": "/agreement/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech",
+      "destination": "/docs/tech/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install",
+      "destination": "/docs/install/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/workbench",
+      "destination": "/docs/tech/workbench/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/network/acl",
+      "destination": "/docs/tech/network/acl/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/sponsorship",
+      "destination": "/docs/install/sponsorship/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/system-settings",
+      "destination": "/docs/tech/system-settings/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/network",
+      "destination": "/docs/tech/category/network/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/network/overview",
+      "destination": "/docs/tech/network/overview/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/firewall",
+      "destination": "/docs/tech/category/firewall/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/public-ip",
+      "destination": "/docs/tech/category/public-ip/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/scheduler",
+      "destination": "/docs/tech/category/scheduler/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/network/vpc-switch",
+      "destination": "/docs/tech/network/vpc-switch/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/my-storage",
+      "destination": "/docs/tech/category/my-storage/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/network/port-mirror",
+      "destination": "/docs/tech/network/port-mirror/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/category/advanced",
+      "destination": "/docs/install/category/advanced/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/category/security",
+      "destination": "/docs/install/category/security/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/node-manage",
+      "destination": "/docs/tech/category/node-manage/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/user-manage",
+      "destination": "/docs/tech/category/user-manage/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/network/port-forward",
+      "destination": "/docs/tech/network/port-forward/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/storage-pool",
+      "destination": "/docs/tech/category/storage-pool/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/firewall/kvm-firewall",
+      "destination": "/docs/tech/firewall/kvm-firewall/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/network/port-security",
+      "destination": "/docs/tech/network/port-security/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/advanced/mcp-server",
+      "destination": "/docs/install/advanced/mcp-server/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/category/site-guide",
+      "destination": "/docs/install/category/site-guide/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/firewall/host-firewall",
+      "destination": "/docs/tech/firewall/host-firewall/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/network/security-group",
+      "destination": "/docs/tech/network/security-group/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/category/quick-start",
+      "destination": "/docs/install/category/quick-start/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/my-storage/file-sharing",
+      "destination": "/docs/tech/my-storage/file-sharing/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/site-guide/image-zoom",
+      "destination": "/docs/install/site-guide/image-zoom/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/site-guide/llm-access",
+      "destination": "/docs/install/site-guide/llm-access/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/system-settings",
+      "destination": "/docs/tech/category/system-settings/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/virtual-machine",
+      "destination": "/docs/tech/category/virtual-machine/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/firewall/connection-mgmt",
+      "destination": "/docs/tech/firewall/connection-mgmt/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/advanced/install-linux",
+      "destination": "/docs/install/advanced/install-linux/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/category/feature-analysis",
+      "destination": "/docs/tech/category/feature-analysis/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/scheduler/scheduler-events",
+      "destination": "/docs/tech/scheduler/scheduler-events/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/advanced/create-template",
+      "destination": "/docs/install/advanced/create-template/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/advanced/install-windows",
+      "destination": "/docs/install/advanced/install-windows/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/node-manage/node-management",
+      "destination": "/docs/tech/node-manage/node-management/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/user-manage/security-center",
+      "destination": "/docs/tech/user-manage/security-center/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/user-manage/user-management",
+      "destination": "/docs/tech/user-manage/user-management/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/category/common-questions",
+      "destination": "/docs/install/category/common-questions/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/user-manage/api-console-auth",
+      "destination": "/docs/tech/user-manage/api-console-auth/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/basic-config",
+      "destination": "/docs/tech/virtual-machine/basic-config/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/feature-analysis/vm-migration",
+      "destination": "/docs/tech/feature-analysis/vm-migration/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/hardware-spec",
+      "destination": "/docs/tech/virtual-machine/hardware-spec/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/import-export",
+      "destination": "/docs/tech/virtual-machine/import-export/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/system-config",
+      "destination": "/docs/tech/virtual-machine/system-config/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/public-ip/public-ip-management",
+      "destination": "/docs/tech/public-ip/public-ip-management/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/creation-modes",
+      "destination": "/docs/tech/virtual-machine/creation-modes/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/network-config",
+      "destination": "/docs/tech/virtual-machine/network-config/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/remote-console",
+      "destination": "/docs/tech/virtual-machine/remote-console/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/storage-config",
+      "destination": "/docs/tech/virtual-machine/storage-config/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/category/kernel-vulnerability",
+      "destination": "/docs/install/category/kernel-vulnerability/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/common-questions/known-errors",
+      "destination": "/docs/install/common-questions/known-errors/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/common-questions/panel-issues",
+      "destination": "/docs/install/common-questions/panel-issues/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/site-guide/deployment-routing",
+      "destination": "/docs/install/site-guide/deployment-routing/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/my-storage/my-storage-management",
+      "destination": "/docs/tech/my-storage/my-storage-management/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/reinstall-rescue",
+      "destination": "/docs/tech/virtual-machine/reinstall-rescue/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/advanced-settings",
+      "destination": "/docs/tech/virtual-machine/advanced-settings/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/quick-start/template-management",
+      "destination": "/docs/install/quick-start/template-management/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/vm-list-operations",
+      "destination": "/docs/tech/virtual-machine/vm-list-operations/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/snapshot-management",
+      "destination": "/docs/tech/virtual-machine/snapshot-management/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/quick-start/infrastructure-config",
+      "destination": "/docs/install/quick-start/infrastructure-config/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/feature-analysis/template-management",
+      "destination": "/docs/tech/feature-analysis/template-management/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/storage-pool/storage-pool-management",
+      "destination": "/docs/tech/storage-pool/storage-pool-management/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/hardware-passthrough",
+      "destination": "/docs/tech/virtual-machine/hardware-passthrough/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/feature-analysis/system-initialization",
+      "destination": "/docs/tech/feature-analysis/system-initialization/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/feature-analysis/qvmconsole-architecture",
+      "destination": "/docs/tech/feature-analysis/qvmconsole-architecture/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/feature-analysis/virtualization-overview",
+      "destination": "/docs/tech/feature-analysis/virtualization-overview/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/tech/virtual-machine/disk-migration-expansion",
+      "destination": "/docs/tech/virtual-machine/disk-migration-expansion/",
+      "statusCode": 301
+    },
+    {
+      "source": "/docs/install/security/kernel-vulnerability/cve-2026-53359",
+      "destination": "/docs/install/security/kernel-vulnerability/cve-2026-53359/",
+      "statusCode": 301
+    }
+  ]
+}
